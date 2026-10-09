@@ -2,7 +2,7 @@
 
 ## 设计文档入口
 
-- [V2 模块详细设计总览与模块目录](multitenant-wallet-design/v2-detailed-design/README.md)：按 14 个模块说明职责、数据模型、接口、流程、恢复和验收。
+- [V2 模块详细设计总览与模块目录](multitenant-wallet-design/20261009-v2-detailed-design/README.md)：按 14 个模块说明职责、数据模型、接口、流程、恢复和验收。
 - [V2 核心架构方案](multitenant-wallet-design/web3_multitenant_custodial_wallet_phase1_architecture_v2.md)：六项核心需求和架构决策。
 - [V1 架构方案](multitenant-wallet-design/web3_multitenant_custodial_wallet_phase1_architecture.md)：一期整体背景。
 

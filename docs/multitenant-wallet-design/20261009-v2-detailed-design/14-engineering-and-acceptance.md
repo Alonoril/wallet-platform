@@ -19,7 +19,7 @@ crates/
     src/deposit/             # M06 充值业务部分
     src/withdrawal/          # M08
     src/risk/                # M08 规则/额度/审批
-    src/custody/              # M09/M10 策略与预留
+    src/custody/             # M09/M10 策略与预留
     src/events/              # M11
     src/reconciliation/      # M12
     src/admin/               # M13
@@ -36,7 +36,7 @@ services/
 migrations/
 config/examples/            # 只含占位配置，不含凭据
 tests/                       # 跨模块、资金与故障恢复场景
-docs/multitenant-wallet-design/v2-detailed-design/
+docs/multitenant-wallet-design/20261009-v2-detailed-design/
 ```
 
 同一个 worker 可按职责运行多个副本/角色，Indexer 和执行器的 PG 角色及 KMS 权限不混用。Signer 程序不依赖开放 API 或核心领域的可变业务服务，只消费受限协议和独立策略事实。

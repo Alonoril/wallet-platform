@@ -79,6 +79,8 @@ stateDiagram-v2
 
 执行费用基于批准金额模拟、estimateGas 安全余量和总费用上限。实际 Ethereum 费用为 `gas_used × effective_gas_price`，链特定额外费用只在其未包含于该值时另加。[EIP-1559](https://eips.ethereum.org/EIPS/eip-1559)
 
+若网络额外费不受交易中的费用字段硬限制，估计值不能当作保证上界。链准入必须确定可验证的保守总费用边界和资本缓冲；无法满足资金担保条件时，不启用该网络的自动签名。
+
 费用计划带版本、过期时间、原生资产 ID 和预算。报价过期不自动提高批准上限；先重估、重新预留和申请许可。native 提现必须同时预留 `value + fee_cap`，token 提现分别预留 token 金额与原生 Gas。
 
 ## 6. 签名、持久化与广播

@@ -35,6 +35,7 @@ API 与链转账金额是最小单位十进制整数，禁止浮点和科学计�
 | `ledger_accounts` | `id, tenant_id, asset_id, owner_kind, owner_id, bucket, normal_side, allow_negative` | 所有身份字段非 NULL；账户业务身份唯一；租户+资产+ID 唯一 |
 | `journals` | `id, tenant_id, asset_id, business_type, business_id, action, cycle, payload_hash, source_chain_fact_id?, reversal_of?, posted_at, ledger_seq` | 业务记账键唯一；已过账不可变 |
 | `journal_entries` | `journal_id, line_no, account_id, tenant_id, asset_id, side, amount` | 行号唯一；组合 FK 保证租户/资产一致 |
+| `chain_effect_postings` | `logical_effect_key, effect_kind, asset_id, cycle, journal_id, proof_ref` | 规范经济效果+类型+资产+cycle 唯一，跨模块防重复 |
 | `balance_projections` | `account_id, normal_balance, version, last_ledger_seq` | 与凭证同事务更新，可从历史重建 |
 | `holds` | `id, tenant_id, user_id, asset_id, kind, original_amount, open_amount, consumed_amount, released_amount, issuer, linked_order_id, expires_at?, release_policy_version, state, version` | 分解金额相加等于 original；金额非负 |
 | `hold_actions` | `hold_id, action_id, kind, amount, journal_id, actor, reason` | `action_id` 唯一，释放/消费幂等 |
@@ -95,7 +96,13 @@ COMMIT
 
 归集、补 Gas 和补仓不改变用户负债。发送端与接收端的内部迁移必须在同一凭证确认，不在扫链接收路径再创建用户充值。网络费无论交易成功或链上回滚，都在最终确认后按实际成本独立记录；费用重试只记最终生效的交易族成员。
 
-### 5.1 数值例子
+### 5.1 规范链效果与唯一过账
+
+链效果由统一归一化键防重复：用户充值由 M06 提交，提现付款/服务费由 M08 提交，内部资产迁移和所有托管钱包 Gas 由 M10 的 CustodyFinalizer 提交。Scanner/Tracker 观察到同一交易不会各记一份费用。效果键基于逻辑移动或 execution、类型和资产；块 hash 是证据版本，不能用于绕过同一经济效果的有效入账限制。
+
+成功/失败提现的付款或退款、Hold 状态和实际 Gas 由 M08 在同一 UnitOfWork 调用 M10/M05 完成；内部归集/补 Gas/调拨的资产迁移和费用同事务过账。重组调整使用批准的新 cycle，保留原有效效果与冲正关联。
+
+### 5.2 数值例子
 
 资产精度 6：用户最终充值 `100000000`（100 单位），提现 `40000000`，服务费 `1000000`。冻结后 AVAILABLE 为 `59000000`，WITHDRAWAL 为 `41000000`；成功后冻结归零、用户剩余 59、外部付款 40、平台收入 1。
 

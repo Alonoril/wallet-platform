@@ -114,7 +114,17 @@ RECOVERY_LOCKED：禁止资金受理和新签名许可。
 
 更换 KMS KEK 不废止已泄露链私钥；用户旧地址无法通过数据库修改使攻击者失去控制。应明确通知地址切换及旧地址风险，并保留可审计应急迁移。
 
-## 9. 性能、告警与验收
+## 9. 接口、性能、告警与验收
+
+### 9.1 模块接口
+
+| 接口 | 输入与结果 |
+|---|---|
+| `CreateCheckpoint` | 链覆盖/最终性、registry version、ledger seq → 可核验联合快照或未满足原因 |
+| `RunReconciliation` | 租户/链/资产范围、checkpoint → 差异条目和工单，不直接改余额 |
+| `ProposeCorrection` | 工单、链/业务证据 → 不可变修复计划和凭证/Hold 影响 |
+| `ExecuteApprovedCorrection` | 审批 ID、计划 hash、预期版本 → 调用各事实所有者幂等执行 |
+| `StartRecovery/UnlockRecovery` | 备份水位、独立日志、发行清单与审批 → 恢复屏障状态 |
 
 地址/资产分片读取，复用区块检查点和增量分录，不每次对所有历史凭证求和。大规模投影重建在隔离快照/影子表完成，验证后受控切换。
 

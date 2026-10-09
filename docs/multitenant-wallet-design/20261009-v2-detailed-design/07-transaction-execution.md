@@ -136,7 +136,19 @@ ERC-20 可以返回 false；交易成功状态不自动证明付款完成。[ERC
 | DB 恢复到旧备份 | 暂停通道，核对独立签名日志与链 Nonce 后恢复 |
 | 未最终收据被重组 | 同家族回到待包含，维持预留，不新建付款 |
 
-## 10. 性能、指标与验收
+## 10. 模块接口、性能与验收
+
+| 内部接口 | 输入与结果 |
+|---|---|
+| `PrepareExecution` | 不可变 intent、批准/资金预留、attempt → 幂等 execution、Nonce slot 与 family |
+| `RequestSignature` | execution、预期版本、grant → 先持久 SIGNING_POSSIBLE，再返回已签结果或 UNCERTAIN |
+| `BroadcastVariant` | 已持久 variant/raw_ref → 广播观测；不直接判定业务成功/失败 |
+| `ApplyReceiptProof` | family、规范收据、效果与最终性 → 最终执行事实/证明供业务结算 |
+| `CreateFeeReplacement` | family、新费用计划/许可 → 同经济参数、同 Nonce 的新 variant |
+| `RequestNonceBarrier` | family、高权限审批 → 同 Nonce 的取消变体，不直接解冻 |
+| `RecoverExecution` | execution、独立许可/签名日志水位 → 复用原 family 的恢复动作或阻塞原因 |
+
+上述指令校验租户、稳定业务操作键与预期版本；外部 HTTP/RPC 调用不会绕过数据库状态提交和独立许可消费。
 
 钱包通道并行，单通道槽位分配串行；不以进程内 Mutex 代替跨实例唯一约束。RPC、模拟和 tracker 使用有界并发与队列背压，不在热路径反复复制 raw bytes。
 

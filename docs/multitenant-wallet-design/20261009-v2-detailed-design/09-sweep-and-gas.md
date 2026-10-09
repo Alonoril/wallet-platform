@@ -128,7 +128,21 @@ batch 状态：`PLANNED → GAS_WAIT → SWEEPING → COMPLETED`，以及 `BUDGE
 
 取消仅能关闭无可生效执行的项目；可能已签的归集或补 Gas 仍保留资金预留与跟踪。账本按每笔最终交易事实处理，batch 完成状态不是唯一入账依据。
 
-## 8. 成本比较与升级条件
+## 8. 模块接口、成本比较与升级条件
+
+### 8.1 模块接口
+
+| 指令 | 输入与结果 |
+|---|---|
+| `RefreshCandidates` | 检查点、地址范围 → 增量候选，不修改用户余额 |
+| `PlanSweep` | 租户、网络、source、策略版本 → 唯一活跃 batch 或已有计划 |
+| `PrepareGasTopup` | batch、generation、预期版本 → 在费用/资金预算内创建执行意图 |
+| `ApplyExecutionFact` | batch/item、最终执行证明、已过账效果引用 → 幂等更新项目和成本状态 |
+| `ReplanUnsignedItems` | 旧费用版本与新预算 → 只调整未签项目；已可能签名项目保持原家族 |
+
+资产迁移/Gas 的正式凭证由 M10 CustodyFinalizer 处理；本模块消费其结果更新计划，避免和扫描器重复记费用。
+
+### 8.2 成本比较与升级条件
 
 同地址 10 次 token 充值，逐次补 Gas/归集可能需要约 20 笔交易；积累后一次补 Gas 加一次 transfer 可降到约 2 笔，前提是没有必须提前归集的风险/流动性要求。这是交易数量示例，不代表任意链固定费用。
 

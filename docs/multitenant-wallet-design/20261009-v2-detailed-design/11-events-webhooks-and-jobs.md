@@ -101,7 +101,19 @@ DNS 解析结果逐个校验，禁止环回、私有、链路本地、云元数�
 
 订阅只覆盖本租户允许事件与公开字段。新增事件类型/schema 不悄悄改变旧版本 payload，提供兼容窗口。endpoint 暂停期间保留可补偿事件，但限制积压容量并告警。
 
-## 9. 性能与验收
+## 9. 模块接口、性能与验收
+
+| 接口 | 输入与结果 |
+|---|---|
+| `AppendEvent` | 业务 UnitOfWork、aggregate/version、类型/schema、公开 payload → 稳定 event_id |
+| `ClaimJob` | kind、worker 身份、租约配置 → job 与新的 fencing epoch |
+| `CompleteJob/RetryJob` | job_id、epoch、结果分类 → 条件完成或安排重试，不决定资金终态 |
+| `RegisterEndpoint` | 授权租户、URL、订阅范围 → 待验证 endpoint/version |
+| `PlanDelivery` | 已提交 event、启用 endpoint/version → 幂等 delivery |
+| `ReplayDelivery` | 原 event、批准目标版本与命令 ID → 保持业务身份的新投递尝试 |
+| `ListTenantEvents` | TenantContext、cursor、筛选条件 → 本租户公开事件与下一 cursor |
+
+Webhook 挑战和回调是受限外部 I/O；参数校验和 endpoint 版本提交之后执行，不持有业务资金锁。消费者不能把消息 payload 中的 tenant_id 当作新的授权身份。
 
 使用按 kind/available_at/state 的任务索引、分批 claim、有界连接池和每目标并发限制。事件 payload 只编码一次；发送时借用持久字节，不为每次重试重建大业务对象。
 

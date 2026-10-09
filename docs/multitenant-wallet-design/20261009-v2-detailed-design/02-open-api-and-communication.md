@@ -82,6 +82,8 @@ BEGIN
 
 业务摘要基于校验后的业务 DTO：稳定 schema 版本、规范地址、规范整数金额、显式默认值，经 [JCS](https://www.rfc-editor.org/rfc/rfc8785) 规范化后 SHA-256。金额始终是字符串。时间戳、nonce、随机加密 IV 和 request ID 不进入业务摘要，付款地址、金额、资产、报价及订单号必须进入。
 
+一期 `external_order_id` 与 `Idempotency-Key` 建议为 1–128 个 ASCII 字符，限定字母、数字及 `._:-`，区分大小写，不自动截断或规范化。稳定业务操作键使用带版本的结构化编码，禁止直接拼接无分界的 tenant/order 字符串。
+
 ## 5. 可选报文加密
 
 TLS 提供所有接口的传输加密。需要降低 TLS 终止节点可见数据的租户，额外启用 [JWE](https://www.rfc-editor.org/rfc/rfc7516)；一期选择单一互操作 Profile，例如 `ECDH-ES+A256KW / A256GCM / P-256`，经库支持和测试向量验证后发布。

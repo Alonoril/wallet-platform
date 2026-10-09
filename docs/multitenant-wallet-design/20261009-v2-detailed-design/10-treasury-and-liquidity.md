@@ -121,7 +121,20 @@ available_hot > high_watermark 或暴露超限 → 批准回流金库。
 
 冷钱包地址由链观察确认，无法自动在线签名；手工离线交易在广播前登记精确意图/hash，并纳入 M07 跟踪与 M12 对账。操作人员不得在线导入冷钱包私钥来绕过等待。
 
-## 8. 异常与验收
+## 8. 接口、异常与验收
+
+### 8.1 模块接口与 CustodyFinalizer
+
+| 接口 | 输入与结果 |
+|---|---|
+| `ReserveWalletFunds` | 事务、租户、wallet、execution、各资产付款/Gas 上界 → 持久 reservation |
+| `SelectWithdrawalWallet` | 批准订单、链/资产与最新预算 → 合格 HOT 候选；选中后原子预留 |
+| `PlanRebalance` | 租户资产缺口、当前在途补仓、策略 → 幂等调拨建议/订单 |
+| `ApplyInternalCustodyEffect` | 最终内部移动证明 → 同事务资产位置迁移、Gas 凭证及预留更新 |
+| `PostNetworkFee` | 调用方 UnitOfWork、最终 execution/fee 证明 → 唯一实际费用凭证 |
+| `AdvanceWalletSnapshot` | 规范检查点余额 → 原子更新快照并标记已反映预留 |
+
+CustodyFinalizer 是 Wallet Core 内本模块的受限入口，不是新增公开服务。它按 M05 的规范效果键过账内部迁移和网络费；M08 的成功/安全失败事务调用它，Scanner/Tracker 仅提供证明。原生 Gas 的多次观测或多个替代 hash 不能重复生成费用凭证。
 
 | 场景 | 处理 |
 |---|---|

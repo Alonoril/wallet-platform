@@ -2,6 +2,8 @@
 
 返回 [设计总览](README.md)。关联需求：第三方结果通知、故障重试和资金流程可靠调度。
 
+> 工程位置：`wallet-core::events/jobs` 持久化，`wallet-app::runtime` 启动同进程消费者和 Webhook 任务；没有独立 Worker 部署。
+
 ## 1. 职责与交付语义
 
 本模块拥有事务事件的投递、任务租约、回调订阅与重试。业务状态由原模块决定，M11 不因任务失败改变余额或判定链交易失败。
@@ -47,7 +49,7 @@ RUNNING → RETRY_WAIT：明确可恢复错误与下次执行时间。
 明确不可自动修复 → DEAD_LETTER：保留业务实体和工单。
 ```
 
-心跳续租与完成写入比较 lease_epoch，防止旧 worker 复活覆盖新状态。fencing 不能阻止旧进程已经发出的 RPC；资金任务仍必须使用相同 execution/grant/tx family 的幂等协议，不因换 worker 新建付款。
+本文 worker 是同进程任务实例。心跳续租与完成写入比较 lease_epoch，防止旧任务在长暂停后继续覆盖新状态。fencing 不能撤回已发出的 RPC；资金任务仍必须使用相同 execution/grant/tx family 的幂等协议，不因换任务实例新建付款。进程崩溃后新进程接管原持久任务。
 
 错误分类为 `RETRYABLE_DEPENDENCY / WAITING_POLICY / UNCERTAIN_EXECUTION / PERMANENT_ARGUMENT / MANUAL_REQUIRED`。UNCERTAIN 不把业务标失败；转 tracker/recovery 任务。重试预算、抖动退避、每租户/链并发上限和失败队列防止故障时洪峰。
 
@@ -81,6 +83,8 @@ RUNNING → RETRY_WAIT：明确可恢复错误与下次执行时间。
 
 平台使用独立 Ed25519 Webhook key，签名 Profile 类似 M02，覆盖 method、target URI、content digest、content type、`x-wallet-event-id` 和 `x-wallet-delivery-id`。每次尝试使用新的 created/expires/nonce 与 attempt ID，业务 event_id 保持稳定。
 
+Webhook key 封装在 M03 通信 Vault，发送任务仅使用通信签名端口，不能借此取得链签名或私钥。通信 Vault 未解锁时等待并积压告警，不发送无签名通知或明文降级；资金 Vault 锁定不必停止已经具备通信能力的投递。
+
 租户从已认证控制面取得平台公钥及轮换版本，不根据请求里的任意 URL 获取公钥。验签、时效、内容摘要、tenant_id 与 endpoint 绑定全部通过后，接收端事务写入 event_id 去重记录和自身业务状态，再返回 2xx。
 
 HTTP 超时后平台无法知道租户是否已提交；按同一 event_id 重试。租户响应 2xx 只表示接收成功，不改变平台已提交资金状态。需要报文保密的订阅可以用登记的租户加密公钥保护内容，原事件和明文业务身份不变。
@@ -89,7 +93,9 @@ HTTP 超时后平台无法知道租户是否已提交；按同一 event_id 重�
 
 endpoint 创建/修改走授权控制面，进行域名校验和挑战确认。只允许 HTTPS，默认 443，拒绝 URL userinfo、未经批准端口和自动重定向。
 
-DNS 解析结果逐个校验，禁止环回、私有、链路本地、云元数据、IPv4-mapped IPv6 绕过和其他保留目标。建立连接时使用已校验 IP，并保留正确 SNI/证书 hostname 校验；重试重新解析和检查，防止 DNS 重绑定。出站网络再限制访问内网。[OWASP SSRF 防护指南](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html)
+DNS 解析结果逐个校验，禁止环回、私有、链路本地、云元数据、IPv4-mapped IPv6 绕过和其他保留目标。建立连接时使用已校验 IP，并保留正确 SNI/证书 hostname 校验；重试重新解析和检查，防止 DNS 重绑定。[OWASP SSRF 防护指南](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html)
+
+Webhook 使用专用受限 HTTP client；主机网络规则只放行登记的 PG/RPC 等固定基础设施与必要公网目标。同一进程需要访问 PG，无法给通知 task 声明独立操作系统出站身份；逻辑 client 校验不等于主机被控制后的网络隔离。
 
 投递绑定 endpoint version。修改 URL 不能让正在重试的旧 delivery 悄悄指向新位置；经审批重定向或重放创建新 delivery 并保留关联。回调服务器响应体只限量记录脱敏摘要，不执行其中指令。
 

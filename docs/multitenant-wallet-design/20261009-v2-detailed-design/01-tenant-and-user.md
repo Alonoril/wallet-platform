@@ -2,6 +2,8 @@
 
 返回 [设计总览](README.md)。关联需求：安全接入、租户与用户唯一账户。
 
+> 工程位置：`wallet-core::tenant`；租户与用户是 core 内 Rust module，无独立服务。
+
 ## 1. 职责与边界
 
 本模块拥有租户、租户用户、接入主体和版本化业务策略。负责生成可信 `TenantContext` 所需的身份事实，不拥有资产余额、私钥或交易执行状态。地址映射由 [M04](04-address-and-asset-registry.md) 管理，资金状态由 [M05](05-ledger-and-holds.md) 管理。

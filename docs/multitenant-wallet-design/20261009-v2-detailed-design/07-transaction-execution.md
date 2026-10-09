@@ -2,6 +2,8 @@
 
 返回 [设计总览](README.md)。关联需求：安全提现/归集执行、Gas 调度、广播不确定性及防重复付款。
 
+> 工程位置：`wallet-core::execution` 负责状态和持久事实，`wallet-chain-evm::transaction` 负责 EVM 适配；签名是调用同进程 `wallet-vault` 的受限端口。
+
 ## 1. 职责与统一模型
 
 本模块拥有链执行事实，接收 M08/M09/M10 批准的语义意图，准备交易、预留执行槽位、请求 M03 签名、持久化后广播并跟踪。它不决定用户余额、风控批准或服务费。
@@ -35,9 +37,9 @@
 stateDiagram-v2
   [*] --> PREPARED
   PREPARED --> CANCELLED_UNSIGNED: 永久撤销许可且确认未签
-  PREPARED --> SIGNING_POSSIBLE: 调 Signer 前原子提交
-  SIGNING_POSSIBLE --> SIGNED: 独立签名日志返回结果
-  SIGNING_POSSIBLE --> UNCERTAIN: 签名响应丢失
+  PREPARED --> SIGNING_POSSIBLE: 调本地签名函数前提交
+  SIGNING_POSSIBLE --> SIGNED: 结果及本地证据确认
+  SIGNING_POSSIBLE --> UNCERTAIN: 调用中断或结果未交接
   SIGNED --> BROADCAST: 原始交易已持久化并提交 RPC
   BROADCAST --> INCLUDED: 规范块观察到收据
   BROADCAST --> UNCERTAIN: RPC 超时或节点分歧
@@ -85,14 +87,14 @@ stateDiagram-v2
 
 ## 6. 签名、持久化与广播
 
-1. 短事务 CAS `PREPARED → SIGNING_POSSIBLE`；提交后才调用 Signer。
-2. Signer 按 M03 永久登记许可、签名并保存结果；重试同 grant 恢复结果。
-3. 执行器自行验证签名恢复地址、完整载荷与本地 tx hash，保存加密 raw transaction。
+1. 短事务 CAS `PREPARED → SIGNING_POSSIBLE`；提交后才通过本地端口调用 M03。
+2. M03 永久登记许可，准入后派生/签名，保存结果密文并完成本地证据 fsync/ACK；重试同 grant 恢复结果。
+3. 执行器自行验证签名恢复地址、完整载荷与本地 tx hash，持久保存 M03 提供的加密 raw 引用/证据摘要；不复制明文到通用业务日志。
 4. raw transaction 可靠落库后才调用 `eth_sendRawTransaction`。
 5. RPC 返回 hash 与本地计算值必须一致；超时或 already-known 只改变广播观测。
 6. 跟踪全部变体；最终收据驱动业务结算与实际费用凭证。
 
-原始签名交易不是私钥，但具有可广播资金权限，存储与读取权限受控。暂停期间保留它，不能假设删除 raw bytes 会使网络中的副本无效。
+原始签名交易不是私钥，但具有可广播资金权限，存储与读取权限受控。其密文由独立证据 Vault 保护；资金 Vault 锁定后可在证据 Vault 就绪、广播策略允许时读取原 raw 重播，不需要解密资金根。全部 Vault 锁定仍可按 tx hash 观察收据，但不自动绕过结果加密。暂停期间保留它，不能假设删除 raw bytes 会使网络中的副本无效。
 
 ### 6.1 最关键的竞态
 
@@ -103,7 +105,7 @@ stateDiagram-v2
 | 操作 | 必须满足 |
 |---|---|
 | 重播 | 完全相同 raw bytes，不改变钱包/Nonce/经济效果 |
-| 费用加速 | 同钱包、同 Nonce、同收款人/value/calldata；费用在独立许可内；遵守该网络替代规则 |
+| 费用加速 | 同钱包、同 Nonce、同收款人/value/calldata；费用在精确许可内；遵守该网络替代规则 |
 | 链上取消 | 高权限 NONCE_BARRIER；追踪取消与付款竞争，直到一个最终消耗原 Nonce |
 | 新执行尝试 | 上一个尝试已有可靠最终未付款/未签证明，并永久结束；业务 Hold/批准仍有效 |
 
@@ -128,12 +130,12 @@ ERC-20 可以返回 false；交易成功状态不自动证明付款完成。[ERC
 
 | 崩溃点 | 恢复动作 |
 |---|---|
-| 槽位已预留、尚未调 Signer | 复用原槽位/模板，或明确撤销许可并修复空洞 |
-| Signer 请求可能发出、响应丢失 | 查询独立 grant 日志，保持资金预留，恢复同一载荷 |
-| Signer 已保存结果、业务 DB 未保存 | 导入已签结果，不能分配第二个 Nonce |
+| 槽位已预留、尚未调用 M03 | 复用原槽位/模板，或明确撤销许可并修复空洞 |
+| 本地签名调用可能开始但未返回 | 查询同库 grant/结果及加密追加证据，保持资金预留，恢复同一载荷 |
+| M03 已保存结果、执行 variant 未保存 | 完成证据确认并导入原结果，不能分配第二个 Nonce |
 | raw 已保存、广播结果丢失 | 查询全部变体、同 raw 重播 |
 | 上链收据已观察、账本未提交 | 按最终业务记账键幂等重做结算 |
-| DB 恢复到旧备份 | 暂停通道，核对独立签名日志与链 Nonce 后恢复 |
+| DB 恢复到旧备份 | 暂停通道，核对未回退的本地/离线签名证据与链 Nonce；证据不完整保持屏障 |
 | 未最终收据被重组 | 同家族回到待包含，维持预留，不新建付款 |
 
 ## 10. 模块接口、性能与验收
@@ -146,11 +148,12 @@ ERC-20 可以返回 false；交易成功状态不自动证明付款完成。[ERC
 | `ApplyReceiptProof` | family、规范收据、效果与最终性 → 最终执行事实/证明供业务结算 |
 | `CreateFeeReplacement` | family、新费用计划/许可 → 同经济参数、同 Nonce 的新 variant |
 | `RequestNonceBarrier` | family、高权限审批 → 同 Nonce 的取消变体，不直接解冻 |
-| `RecoverExecution` | execution、独立许可/签名日志水位 → 复用原 family 的恢复动作或阻塞原因 |
+| `ExportOfflineIntent/ImportOfflineSignature` | 冷钱包批准/精确载荷 → 导出前提交 SIGNING_POSSIBLE；导入校验原族/Nonce/签名并完成结果证据确认 |
+| `RecoverExecution` | execution、许可/结果与本地/离线证据水位 → 复用原 family 的恢复动作或阻塞原因 |
 
-上述指令校验租户、稳定业务操作键与预期版本；外部 HTTP/RPC 调用不会绕过数据库状态提交和独立许可消费。
+上述指令校验租户、稳定业务操作键与预期版本；函数调用和外部 RPC 均不能绕过数据库状态提交、精确许可消费及证据交接。本地调用也存在签名已生成而应用崩溃的窗口，不能省略可能签名状态。
 
-钱包通道并行，单通道槽位分配串行；不以进程内 Mutex 代替跨实例唯一约束。RPC、模拟和 tracker 使用有界并发与队列背压，不在热路径反复复制 raw bytes。
+钱包通道并行，单通道槽位分配串行；数据库唯一约束负责并发任务和重启安全，不只依赖进程内 Mutex。本版一个在线实例；RPC、模拟和 tracker 使用有界并发与队列背压，不在热路径反复复制 raw bytes。
 
 监控队首停留时长、Nonce 空洞/未知消费、签名不确定数量、替代频率、原生费用预留、实际费用超差、效果异常与重复结算。
 

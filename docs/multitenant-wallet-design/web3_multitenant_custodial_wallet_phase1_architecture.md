@@ -1,5 +1,7 @@
 # Web3 多租户中心化托管钱包平台——一期技术架构方案
 
+> 历史版本：本文保留 V1 背景，独立 Signer/Worker、外部密钥服务和微服务演进建议已被 V2.2 替代。当前采用单项目、单在线进程、必要才拆 Rust crate、项目内软件 Vault 和全硬化派生，见 [当前核心架构](web3_multitenant_custodial_wallet_phase1_architecture_v2.md) 与 [模块详细设计](20261009-v2-detailed-design/README.md)。
+
 > 版本：V1.0  
 > 日期：2026-10-09  
 > 定位：面向第三方项目提供多租户、API 化、平台托管私钥的加密资产基础设施  

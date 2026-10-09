@@ -2,9 +2,11 @@
 
 ## 设计文档入口
 
-- [V2 模块详细设计总览与模块目录](multitenant-wallet-design/20261009-v2-detailed-design/README.md)：按 14 个模块说明职责、数据模型、接口、流程、恢复和验收。
-- [V2 核心架构方案](multitenant-wallet-design/web3_multitenant_custodial_wallet_phase1_architecture_v2.md)：六项核心需求和架构决策。
-- [V1 架构方案](multitenant-wallet-design/web3_multitenant_custodial_wallet_phase1_architecture.md)：一期整体背景。
+- [V2.2 模块详细设计总览与目录](multitenant-wallet-design/20261009-v2-detailed-design/README.md)：M01–M14 是逻辑模块，按必要边界组织为建议 5 个 Rust crate；单项目、单在线进程。
+- [V2.2 核心架构](multitenant-wallet-design/web3_multitenant_custodial_wallet_phase1_architecture_v2.md)：软件 Vault、项目内助记词加解密、全硬化派生、充提账本与恢复。
+- [V1 历史架构](multitenant-wallet-design/web3_multitenant_custodial_wallet_phase1_architecture.md)：保留早期讨论背景。
+
+> 当前实施基线为 V2.2：本版不支持微服务/独立 Signer/Worker 部署，不接 KMS/HSM/MPC 等外部托管能力。下方原始问答中的旧架构建议作为历史记录保留，其进程、外部密钥和非硬化地址方案不作为当前实施要求。
 
 # 问1
 

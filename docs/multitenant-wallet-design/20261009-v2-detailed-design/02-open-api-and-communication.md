@@ -2,6 +2,8 @@
 
 返回 [设计总览](README.md)。关联需求：第三方通过加密 HTTP API 集成，资金指令可认证、可防重放、可幂等。
 
+> 工程位置：`wallet-app::http`；持久幂等属于 `wallet-core::idempotency`。全部请求在一个应用内处理。
+
 ## 1. 职责与处理顺序
 
 本模块负责请求身份、权限、传输/报文协议、业务幂等入口和错误契约。用户与权限事实来自 [M01](01-tenant-and-user.md)，资金操作调用 [M05](05-ledger-and-holds.md)/[M08](08-withdrawals-and-risk.md)，回调由 [M11](11-events-webhooks-and-jobs.md) 执行。
@@ -13,7 +15,7 @@
 → scope/租户/用户授权 → 数据库幂等事务 → 业务受理
 ```
 
-公网 Gateway 不改变请求内容、路径或查询参数。Wallet API 中间件完成验签，从公钥所属主体产生 `TenantContext`；忽略公网传入的内部租户上下文头。内部跳转通过 mTLS 绑定服务身份，外部 URI 的重建只信任指定网关，防止伪造 forwarded 头。
+默认由同进程 Axum/rustls 终止 TLS/mTLS 并验签，从公钥所属主体产生 `TenantContext`，忽略公网传入的内部租户上下文/forwarded 头。M01/M05/M08 调用是本地 typed command，没有内部 mTLS 或服务身份跳转。若部署另加反向代理，必须保持原字节/URI，并仅信任显式登记的代理；它不属于应用必需组件。
 
 ## 2. 接入与密钥生命周期
 
@@ -25,7 +27,7 @@
 
 密钥状态 `PENDING → ACTIVE → RETIRING → REVOKED`。轮换可允许旧新公钥短时并行，撤销立即禁止新请求；已受理订单仍按状态机处理。不能因撤销 API key 直接删除已签交易或解冻其余额。
 
-`api_keys` 保存 `kid, tenant_id, principal_id, public_key, algorithm, scopes, state, not_before, expires_at, version`。算法绑定登记记录，客户端 `alg` 不得改变公钥用途。用户 API 密钥与平台 Webhook 签名、JWE 加密密钥分离。
+`api_keys` 保存 `kid, tenant_id, principal_id, public_key, algorithm, scopes, state, not_before, expires_at, version`。算法绑定登记记录，客户端 `alg` 不得改变公钥用途。用户 API 密钥与平台 Webhook 签名、JWE/TLS 私密材料分离；平台私密材料统一由 M03 的项目内通信 Vault 封装和受控调用，不接入外部 Secret/签名服务。
 
 ## 3. 签名 Profile
 
@@ -63,7 +65,7 @@ Signature: wallet=:<base64-signature>:
 
 资金写请求在 PG 写入 `api_replay_nonces(kid, nonce, expires_at)`，`(kid, nonce)` 唯一。完成密码学和时效验证后才占用 nonce，避免未认证请求制造存储负载。nonce 保留到 `expires_at + clock_skew` 后清理。
 
-PG 不可用时资金接口拒绝受理。Redis 可加速已使用 nonce 的拒绝，但不得成为资金接口的唯一防重放记录。一次请求的 nonce 即使业务事务失败也已使用；客户端重试应换 nonce 和 request ID，保留原业务幂等键。
+PG 不可用时资金接口拒绝受理。本版使用进程内有界缓存加速已使用 nonce 的拒绝，PG 仍是防重放权威，不依赖 Redis。一次请求的 nonce 即使业务事务失败也已使用；客户端重试应换 nonce 和 request ID，保留原业务幂等键。
 
 ### 4.2 幂等原子性
 

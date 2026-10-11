@@ -5,7 +5,7 @@ flowchart TD
   end
 
   subgraph S2["② 充值审查与观察期"]
-    DV -->|"原生币 / ERC20 入账"| IDX["Indexer：链上确认 + 分笔入账"]
+    DV -->|"原生币 / ERC20 入账"| IDX["wallet-platform-rust：来源解析 + depositId + 链终局"]
     IDX --> RISK{"来源风控和地址冻结检测通过？"}
     RISK -->|"通过"| WATCH["观察期 T：每笔充值独立计时"]
     WATCH --> PRE{"观察期到期 / 归集前复核通过？"}
@@ -19,10 +19,19 @@ flowchart TD
     RETIRE --> OLD["旧地址仍可能被动收到转账；保留审计记录"]
   end
 
-  subgraph S4["④ 未归集余额的用户提现"]
+  subgraph S4["④ 统一多签提现：未归集余额 / 热池权益"]
     WATCH -->|"用户发起提现"| WRISK{"出金风控通过且有清洁可用余额？"}
-    WRISK -->|"通过"| WITHDRAW["DepositVault.withdraw：Relayer 支付 Gas"]
+    WRISK -->|"通过"| MREQUEST["Milon App：统一 requestId，原子预留本金和费用"]
+    MREQUEST --> MVOTE["Milon 多签执行 ApproveWithdrawal，等待业务终局"]
+    MVOTE --> CERT["wallet-platform-rust：汇集节点跨链签名，中继原 Permit"]
+    CERT --> SOURCE{"已批准的付款源？"}
+    SOURCE -->|"未归集余额"| WITHDRAW["DepositVault 提现：拟新增验签和共享订单入口"]
+    SOURCE -->|"热钱包余额"| HOUT["HotVault.executeWithdrawal：验签、风控、共享订单消费"]
     WITHDRAW --> EXT["用户指定外部地址"]
+    HOUT --> EXT
+    EXT --> FINAL["EVM 付款最终确认"]
+    FINAL --> RESULT["wallet-platform-rust：收集可信结果，中继至 Milon"]
+    RESULT --> PAID["Milon ApplyWithdrawalResult：幂等结算预留"]
     WRISK -->|"失败"| HOLD["拒绝 / 冻结本次提现"]
   end
 
@@ -35,6 +44,7 @@ flowchart TD
     NEW --> SWEEP
     CNT -->|"否"| OLDEST["选择最旧且风险正常的 HotVault"]
     SWEEP --> HOT["HotVault：目标持仓上限 100,000 USD"]
+    HOT -->|"用户申请提取热池权益"| WRISK
   end
 
   subgraph S6["⑥ 冷钱包归集与容量回收"]
@@ -54,9 +64,22 @@ flowchart TD
     COLD -.->|"事后发现污染"| COLD_RISK["冷钱包离线隔离 + 合规处置，不支持链上撤销"]
   end
 
+  subgraph S8["⑧ EVM 与 Milon 权益映射"]
+    RISK -->|"初审通过，来源已终局"| CREDIT["Rust：映射 tenantKey / userKey / assetKey，汇集入账授权"]
+    CREDIT --> MBAL["Milon CreditDeposit：来源去重，记 available / riskHeld"]
+    MBAL -.->|"提供可用权益与用户授权校验依据"| WRISK
+    LOCK --> RUPDATE["Rust：同步 EVM 限制与 Milon 风险预留"]
+    SWEEP -.-> MOVEMENT["Rust：内部资金移动，只更新托管位置，不再次入账"]
+    SEND -.-> MOVEMENT
+  end
+
   classDef danger fill:#fee2e2,stroke:#f87171,color:#991b1b;
   classDef money fill:#d1fae5,stroke:#34d399,color:#065f46;
   classDef hot fill:#fef3c7,stroke:#f59e0b,color:#92400e;
+  classDef milon fill:#e0e7ff,stroke:#6366f1,color:#312e81;
+  classDef bridge fill:#e0f2fe,stroke:#0ea5e9,color:#0c4a6e;
   class LOCK,RETIRE,OLD,HOLD,FREEZE,COLD_RISK danger;
-  class WITHDRAW,EXT,SEND,COLD,RELEASE money;
+  class WITHDRAW,HOUT,EXT,SEND,COLD,RELEASE,FINAL money;
   class PM,CAP,CNT,OLDEST,NEW,SWEEP,HOT hot;
+  class MREQUEST,MVOTE,PAID,MBAL milon;
+  class IDX,CERT,RESULT,CREDIT,RUPDATE,MOVEMENT bridge;

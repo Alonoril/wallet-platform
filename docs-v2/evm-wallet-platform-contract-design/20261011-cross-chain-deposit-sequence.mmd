@@ -1,0 +1,35 @@
+sequenceDiagram
+    autonumber
+    participant E as EVM 链<br/>充值合约与资产
+    participant R as wallet-platform-rust<br/>EvmAdapter 与桥作业
+    participant M as Milon App<br/>映射、来源簿与权益
+
+    Note over E,M: 前置：两端映射已确认，chainKey / walletKey / assetKey 一致
+    E-->>R: B3 成功到账（blockHash、txHash、logIndex 或 NativeTx）
+    R->>R: 生成稳定 depositId，按生效区间匹配用户与资产
+    R->>R: 同一 DB 事务保存原始证据、Pending 与 Outbox
+
+    alt 来源在终局前被重组移除
+        E-->>R: 规范链不再包含原观察
+        R->>R: 标 Removed 并重扫；不投递权益消息
+    else 来源终局且初审通过
+        R->>R: 协调独立节点核验到账、归属和风险证据
+        R->>M: B4 CreditDeposit（depositId、amountRaw、授权证据）
+        M->>M: 校验配置版本、来源唯一性和门限授权
+        M->>M: 原子增加 available；受限入账增加 riskHeld
+        M-->>R: DepositCredited（depositId、bodyHash、权益版本）
+        R->>R: 等业务交易终局，查询同一 depositId
+        R->>R: B8 更新权益投影、完成 Outbox 并通知
+    else 未通过初审或证据不完整
+        R->>R: 保持 Pending / Unknown；不自动增加 available
+    end
+
+    opt 观察期结束且归集复核通过
+        R->>E: 受控 sweep（movementId、真实金额和风险版本）
+        E-->>R: 归集事件及最终托管余额
+        R->>M: B6 RecordCustodyMovement（depositId 关联）
+        M-->>R: 托管位置更新；用户总权益保持不变
+    end
+
+    Note over R,M: 回包丢失先查 depositId 与 bodyHash，再重试原消息
+    Note over E,M: 一笔到账只选一种主定位；归集与冷钱包补仓不得再次当充值

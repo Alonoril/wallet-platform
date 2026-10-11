@@ -1,0 +1,53 @@
+sequenceDiagram
+    autonumber
+    participant E as EVM 链<br/>风险控制与共享订单簿
+    participant R as wallet-platform-rust<br/>恢复与对账
+    participant M as Milon App<br/>风险预留与订单
+
+    rect rgb(254, 242, 242)
+        Note over E,M: 风险事件或充值地址污染
+        R->>R: 立即关闭相关新签名与付款作业
+        R->>E: 授权冻结地址 / 池 / 资产，提升风险版本
+        R->>M: B5 ApplyRiskUpdate（caseId、序号、授权）
+        M->>M: 将指定 available 转 riskHeld，保持权益总额
+        E-->>R: EVM 限制最终生效
+        M-->>R: Milon 风险限制成功终局
+        R->>R: 记录两端收敛，保留历史映射与证据
+        opt 发布替代充值地址
+            R->>E: 部署新地址，核验版本及最终代码
+            E-->>R: 新 route 的最终 EVM 绑定
+            R->>M: B2 发布新 mappingEpoch 与明确 cutover
+            M-->>R: 映射成功终局
+            R->>R: 激活新 route；旧地址停止业务入账
+        end
+    end
+
+    rect rgb(255, 251, 235)
+        Note over E,M: 取消与付款竞态
+        M-->>R: CancelRequested（保留 withdrawalHeld）
+        R->>R: 停止新付款证书，收集有效取消授权
+        R->>E: cancelWithdrawal（稳定 requestId）
+        alt 取消先成功并达到终局
+            E-->>R: 共享订单为 Cancelled；后续付款拒绝
+            R->>M: B7 门限核验的取消结果
+            M->>M: 幂等释放原预留，写入 Cancelled
+        else 付款先成功并达到终局
+            E-->>R: 共享订单为 Executed；付款参数确定
+            R->>M: B7 门限核验的付款结果
+            M->>M: 幂等结算原预留，写入 Paid
+        else 最终结果未知
+            R->>R: 重查共享簿与交易，保留预留
+        end
+        M-->>R: B8 等结果终局后完成订单投影
+    end
+
+    rect rgb(239, 246, 255)
+        Note over E,M: 服务重启、RPC 超时或回包丢失
+        R->>R: 读取持久 cursor、Inbox / Outbox 与交易尝试
+        R->>E: 查付款 / 取消及规范链状态
+        R->>M: 查 depositId / requestId / messageId / bodyHash
+        E-->>R: 已执行、已取消或仍待确认
+        M-->>R: 已应用业务结果及终局证据
+        R->>R: 重试未完成原消息；不新建经济订单
+        Note over E,M: 已终局差额触发暂停和对账，不自动补发权益
+    end

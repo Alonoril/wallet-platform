@@ -1,0 +1,49 @@
+sequenceDiagram
+    autonumber
+    participant E as EVM 链<br/>真实资产与消费状态
+    participant R as wallet-platform-rust<br/>双向桥接服务
+    participant M as Milon App<br/>专用托管权益账本
+
+    rect rgb(239, 246, 255)
+        Note over E,M: 配置发布：统一链、租户、用户、资产和地址标识
+        R->>E: B1 注册资产与托管地址，核验最终部署
+        E-->>R: EVM 映射及合约状态最终确认
+        R->>M: B2 RegisterBridgeMapping（mappingEpoch、配置授权）
+        M-->>R: 映射成功终局，返回配置摘要
+        R->>R: 两端一致后将映射标 Ready
+    end
+
+    rect rgb(236, 253, 245)
+        Note over E,M: 充值：真实到账转成一次用户权益
+        E-->>R: B3 来源到账（txHash、定位、原始金额）
+        R->>R: 映射归属，来源终局，风控，节点独立核验
+        R->>M: B4 CreditDeposit（depositId、assetKey、amountRaw）
+        M->>M: 来源去重，原子增加 available 或 riskHeld
+        M-->>R: B8 已应用并终局，更新查询投影
+        E-->>R: B6 归集 / 热池调拨 / 转冷 / 补仓
+        R->>M: RecordCustodyMovement（仅更新托管位置）
+        Note over E,M: 内部资金移动不增加用户总权益
+    end
+
+    rect rgb(255, 251, 235)
+        Note over E,M: 提现：Milon 审批，经后端到 EVM，再回 Milon 结算
+        M->>M: W1 用户授权，原子预留本金与费用
+        M-->>R: 发现 requestId、reservationId 和余额预留
+        R->>M: W2 固定唯一 attempt、付款源与 Permit
+        R->>M: W3 中继节点投票并执行 ApproveWithdrawal
+        M-->>R: 审批成功终局（permitDigest、块证书）
+        R->>R: 汇集独立节点的 EVM 跨链签名
+        R->>E: W4 executeWithdrawal（原 Permit、门限证书）
+        E->>E: 验签、风控、共享订单消费与转账
+        E-->>R: 付款成功 receipt，等待目标链终局
+        R->>M: B7 ApplyWithdrawalResult（可信付款结果）
+        M->>M: 幂等结算原 withdrawalHeld
+        M-->>R: B8 Paid 成功终局，完成桥消息与通知
+    end
+
+    rect rgb(254, 242, 242)
+        Note over E,M: 风险与恢复：两端独立确认，后端追踪收敛
+        R->>E: 风险限制或安全取消（有效授权）
+        R->>M: B5 风险预留或 CancelRequested（有效授权）
+        Note over E,M: 取消或所有旧授权失效最终确认后，才能释放提现预留
+    end

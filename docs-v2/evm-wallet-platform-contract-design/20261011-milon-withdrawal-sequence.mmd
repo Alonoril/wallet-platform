@@ -1,39 +1,36 @@
 sequenceDiagram
     autonumber
-    participant U as 用户 / 租户
-    participant B as Rust 后端
-    participant M as Milon 提现 App
-    participant V as 节点审批与签名服务
-    participant A as EVM 授权验证器
-    participant H as EVM 热钱包与订单簿
-    participant R as 用户收款地址
+    participant E as EVM 链<br/>付款源、验签器与共享簿
+    participant R as wallet-platform-rust<br/>双向桥接服务
+    participant M as Milon App<br/>权益预留与多签订单
 
-    U->>B: 提交绑定资产、金额与收款人的请求
-    B->>M: RequestWithdrawal（用户授权证据）
-    M->>M: 原子预留本金与费用，生成唯一订单
-    B->>M: 建立唯一有效执行尝试，锁定 Permit
-    V->>M: VoteInit（ApproveWithdrawal 指令）
-    loop 其他审批节点独立检查后投票
-        V->>M: Vote（同一 intent）
+    Note over E,M: tenantKey / userKey / assetKey 与 requestId 全程一致
+    R->>M: W1 RequestWithdrawal（用户授权、本金、费用与收款人）
+    M->>M: 校验身份和 available，原子建立 withdrawalHeld
+    M-->>R: Reserved（requestId、reservationId、权益版本）
+    R->>E: 读取有效付款源、流动性、风险与策略版本
+    E-->>R: 具体 Vault 和最终配置状态
+    R->>M: W2 PrepareWithdrawalAttempt（attemptId、完整 Permit）
+    M->>M: 锁定唯一尝试、目标链、付款源与 permitDigest
+    R->>R: 协调独立审批节点核验用户、权益和 Permit
+    R->>M: W3 中继 VoteInit（批准指令与首票签名）
+    loop 其他节点独立批准后返回签名交易
+        R->>M: 中继 Vote（同一 intent）
     end
-    B->>M: vote-gated execute：ApproveWithdrawal
-    M->>M: 校验预留、委员会版本与订单状态
-    M-->>V: 审批成功的用户块与终局证书
-    V->>V: 经各自验证节点核验已终局的 Approved 记录
-    V-->>B: 跨链证书的独立 ECDSA 签名
-    B->>H: executeWithdrawal（Permit、门限证书）
-    H->>A: 验证 Permit 摘要与跨链证书
-    A->>A: 验证来源、用途、委员会版本与去重门限
-    A-->>H: 授权有效
-    H->>H: 当前风控、额度、共享订单未消费检查
-    H->>R: 原子消费订单并转账
-    H-->>B: WithdrawalExecuted 事件
-    B->>B: 等待目标 EVM 链终局
-    V->>V: 独立核验 EVM 付款或取消终局证据
-    V->>M: 门限授权的结果回执
-    M->>M: 幂等结算预留并写入 Paid / Cancelled
-    M-->>B: 订单最终结果
-    B-->>U: 更新订单并通知
+    R->>M: vote-gated execute：ApproveWithdrawal
+    M->>M: 复核订单、预留和委员会配置，写 Approved
+    M-->>R: 业务成功并终局（permitDigest、审批定位、QC）
+    R->>R: 汇集节点独立核验终局后的 ECDSA 跨链签名
+    R->>E: W4 executeWithdrawal（原 Permit、门限证书）
+    E->>E: 验签、当前风险、额度与付款源余额检查
+    E->>E: 原子消费 requestId 并向已授权收款地址付款
+    E-->>R: WithdrawalExecuted（requestId、付款参数）
+    R->>R: 等目标链终局，独立节点核验真实付款结果
+    R->>M: B7 ApplyWithdrawalResult（同一订单与可信结果）
+    M->>M: 幂等结算本金和费用预留，写 Paid
+    M-->>R: B8 结果成功终局（messageId、requestId、bodyHash）
+    R->>R: 更新查询投影、完成桥作业并通知用户
 
-    Note over B,H: 超时、广播失败或 Milon CancelRequested 均不能直接释放预留
-    Note over V,A: EVM 信任节点门限证明；一期不直接验证 Milon 原生终局证书
+    Note over E,M: 所有付款源共享订单簿；DepositVault 未归集提现为拟新增入口
+    Note over R,M: 用户也可直接在 Milon 发起 W1；后端发现订单后继续同一流程
+    Note over E,M: 私钥在独立节点，后端统一中继；未知付款结果不释放预留

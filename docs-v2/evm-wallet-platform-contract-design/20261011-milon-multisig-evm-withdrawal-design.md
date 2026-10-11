@@ -4,6 +4,8 @@
 
 本方案补充[原始需求](需求.md)，聚焦已经归集到 EVM 热钱包的资产如何经 Milon 审批后提现。`HotVault` 是新版设计名称；当前 Solidity 实现中对应的出金入口为 `TreasuryVault.executeWithdrawal`。两套名称不代表当前已经实现了新版动态热钱包池。
 
+三段标识、专用权益账本、金额精度和双向消息以 [EVM / Rust / Milon 映射与桥接设计](20261011-evm-rust-milon-mapping-and-bridge.md) 为统一约定；该方案还补齐充值映射与未归集提现的付款源约束。
+
 ## 1. 设计结论与安全边界
 
 采用以下路径：
@@ -17,7 +19,7 @@
 
 Milon 已经实现 MIP-25 链上多签。需要新增的是提现业务 App、节点跨链签名服务和 EVM 授权验证器，无需另写一套通用多签引擎。按当前 Milon 仓库形态，提现“合约”应落成 Rust 原生链上应用，使用 `#[app]`、`#[entry]`、`#[resource]`；本次查看的应用入口没有通用 Solidity 合约部署接口。
 
-后端负责请求编排、材料收集、支付 Gas 和结果追踪。付款权由 EVM 合约验证的门限授权控制，后端持有的 Relayer 密钥不应拥有单独批准提现的权限。
+`wallet-platform-rust` 是双向桥接服务，负责来源解析、映射、请求编排、消息持久化、材料收集、支付 Gas 和结果追踪。节点的审批投票、跨链证书和结果授权由后端统一中继；验证节点仍独立读链与持有密钥。付款权由 EVM 合约验证的门限授权控制，后端持有的 Relayer 密钥不应拥有单独批准提现的权限。
 
 一期采用委员会跨链证明：EVM 相信指定节点的门限签名，签名节点承诺自己核验了 Milon 上的终局审批。EVM 不直接验证 Milon 原生 QC。达到门限的跨链签名密钥若被攻陷，攻击者仍可能伪造审批，因此部署隔离、限额、暂停和治理约束是此方案的安全边界。若要求 EVM 自行证明 Milon 审批确实发生，需要另一条路线：Milon 轻客户端和应用状态/执行结果证明。
 
@@ -82,11 +84,11 @@ Milon 的槽提议使用 BLS 聚合，用户块 `BlockCert / QuorumCert` 保存 
 
 ### 4.1 余额和用户授权从哪里来
 
-要让节点独立判断“此用户确实有余额可提”，仅查询 `wallet-platform-rust` 数据库不够。建议新增提现权益账本资源，或接入现有业务账本的可验证状态：记录租户、用户、EVM 资产映射、可用余额、提现预留、风险预留和版本。
+用户已选择新增专用托管权益账本资源：记录租户、用户、EVM 资产映射、可用余额、提现预留、风险预留和版本。Milon App 是这些权益与订单的权威，`wallet-platform-rust` 数据库保存终局查询投影，供节点核验的余额来自 Milon 链上资源。
 
 这里的余额是对 EVM 托管资产的提取权益，不默认等同于 MIL 原生币或 Milon 已有 Token。充值、交易结算、内部转账等改变余额的操作都必须纳入该账本；否则只做充值映射仍无法保证提现额度正确。EVM 充值入账需由独立验证节点核验终局和充值事件，再以门限授权记账，按 `chainId + txHash + logIndex` 去重。
 
-若一期只保留 PostgreSQL 权威账本，需要增加可验证的账本承诺/余额证明，或明确依赖受信账本签名者的授权。后者会让安全性继续依赖该签名者；多个节点读取同一个后端 API 不会消除这种依赖。
+资产权益按 EVM 最小单位保存 256 位原始金额，不自动铸造 Milon Token。充值解析、终局核验、门限材料收集和 CreditDeposit 提交都经后端桥服务，目标 App 自行校验来源与授权并去重。PostgreSQL 不独立增加或扣减同一用户权益。
 
 提现请求也必须有独立可验证的用户授权。用户有 Milon 账户时可使用其账户授权；托管用户则需约定身份绑定和请求签名方式，绑定租户、用户、资产、金额、费用、收款地址、用户 nonce 与期限。不能让后端一个通用平台签名替代全部用户意愿校验。
 
@@ -121,8 +123,8 @@ Milon 的槽提议使用 BLS 聚合，用户块 `BlockCert / QuorumCert` 保存 
 
 ```text
 1. 建立唯一执行尝试，冻结 ApproveWithdrawal 的业务参数。
-2. 首个审批成员发送 VoteInit(owner, intentHash, VoteProposal)。
-3. 其他成员拉取首票 proposal，核验 intent hash、用户授权与账本预留后发送 Vote。
+2. 首个审批成员签署 VoteInit(owner, intentHash, VoteProposal)，后端中继提交。
+3. 其他成员拉取首票 proposal，核验 intent hash、用户授权与账本预留后签署 Vote，后端中继提交。
 4. 达到门限后，Relayer 提交包含原业务指令的 vote-gated execute。
 5. ApproveWithdrawal 校验当前有效的尝试和预留，成功写入 Approved。
 6. 等待该成功业务交易所在用户块的终局，再签发跨链证书。
@@ -191,6 +193,8 @@ TreasuryVault.executeWithdrawal(Permit, certificateBytes, councilAuthorization)
 
 ERC-1271 验签为只读操作，不能在 `isValidSignature` 内消费提现订单。订单消费放在 HotVault 调用的共享状态合约中，与实际转账处于同一 EVM 事务。[ERC-1271 标准](https://eips.ethereum.org/EIPS/eip-1271)明确了只读验签约束。
 
+桥接消息中的 mappingEpoch、assetEpoch、sourceKind 和完整业务关联通过批准上下文与 approvalDigest 绑定，再纳入原 Permit digest。新旧协议版本不能混用；新增 DepositVault 付款源需有同等验签、共享订单和资金预留保护。
+
 ## 6. EVM 安全执行要求
 
 每次付款必须依次满足：
@@ -237,7 +241,7 @@ Milon consensus epoch、审批 committeeEpoch、EVM bridgeEpoch、TenantAuthorit
 
 后端拿到 txHash 后记录 Submitted，等待目标链规定的终局。节点独立核验正确链、登记 Vault、成功 receipt、准确的 WithdrawalExecuted 事件、requestId、资产、金额与收款人，并查询共享订单状态。结果回执还要绑定 reservation/permitDigest、blockHash、txHash、logIndex 和结果用途。
 
-一期回执由独立结果验证委员会门限授权，Milon App 核对成员版本和来源并幂等应用；以后可替换为 EVM 轻客户端证明。普通后台调用不能直接把订单标 Paid 或释放预留。回执可以复用固定委员会账户的链上多签，但要区别付款授权和结果证明的业务用途。
+一期回执由独立结果验证委员会门限授权，后端收集并向 Milon 中继 ApplyWithdrawalResult；App 核对成员版本和来源并幂等应用，后端再等待结果交易终局更新投影。以后可替换为 EVM 轻客户端证明。普通后台调用不能直接把订单标 Paid 或释放预留。回执可以复用固定委员会账户的链上多签，但要区别付款授权和结果证明的业务用途。
 
 Paid 后将用户预留结算为已付款，并按审批时确定的规则处理费用。回执重复不重复扣款；回执延迟不再次发送不同订单。Milon 共识暂停时允许保留预留，待恢复后继续结算，不能假设两条链存在原子事务。
 
@@ -265,7 +269,7 @@ Paid 后将用户预留结算为已付款，并按审批时确定的规则处理
 | 节点审批服务 | 独立核验用户意愿、账本、风控、目标钱包、Permit；发起/续投 Milon 多签 |
 | 节点跨链签名服务 | 终局与审批核验、固定 EIP-712 编码、独立密钥管理、证书材料归档、拒绝任意 digest 签名 |
 | EVM 合约 | ERC-1271 跨链验证器、桥配置治理、共享 WithdrawalBook、取消授权、现有风险/额度控制接入 |
-| wallet-platform-rust | 幂等订单、Outbox、投票槽调度、签名收集、Gas/nonce 管理、EVM 终局监听、结果回执与恢复 |
+| wallet-platform-rust | 双向桥接：链/用户/资产/地址映射、充值来源与权益中继、Inbox/Outbox、投票槽调度、签名收集、Gas/nonce 管理、两端终局、结果回执与对账恢复 |
 
 建议先固定用户授权/余额权威、委员会成员与故障模型，再封存跨链消息 ABI 和状态机；然后实现 Milon App 与 EVM 验签/订单簿，最后接入节点服务和 Rust 后端。现有仓库未包含 wallet-platform-rust 实现，本方案没有假设它已有多签或安全签名能力。
 
@@ -274,8 +278,8 @@ Paid 后将用户预留结算为已付款，并按审批时确定的规则处理
 ## 9. 落地前仍需定稿的业务选择
 
 - 用户在 Milon 上拥有自签账户，还是使用托管身份授权证明。
-- 余额以 Milon 权益账本为权威，还是使用可验证 PostgreSQL 账本承诺；充值和交易余额变化如何同步。
+- 余额已确定以 Milon 专用托管权益账本为权威；业务交易、内部转账等额外权益变化须接入同一账本。
 - 全部共识验证节点审批，还是固定提现子委员会；一期人数、权重、阈值和换届规则。
 - 实际 EVM 目标链及其终局规则、支持的资产语义和提现收费方式。
 
-原需求中的“用户提取未归集余额”属于 DepositVault 的独立出金路线。本方案聚焦热钱包提款；若保留前者，需要将同一用户预留、Milon 审批和跨钱包唯一性约束扩展到充值合约，明确与热钱包提款如何互斥。冷钱包私钥也不参与用户热钱包提款，只在既定离线流程中处理补仓。
+原需求中的“用户提取未归集余额”属于 DepositVault 的独立出金路线。三段映射设计已将其纳入同一 requestId、Milon 预留、多签审批和 EVM 共享消费簿，并要求与 sweep 共用余额屏障；该 DepositVault 提款入口尚需新增实现。冷钱包私钥不参与用户热钱包提款，只在既定离线流程中处理补仓。

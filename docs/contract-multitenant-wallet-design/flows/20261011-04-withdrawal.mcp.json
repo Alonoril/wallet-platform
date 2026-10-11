@@ -1,0 +1,823 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "mcp-excalidraw-server",
+  "elements": [
+    {
+      "id": "20261011-04-withdrawal-title",
+      "type": "text",
+      "x": 40,
+      "y": 30,
+      "width": 2360,
+      "height": 50,
+      "strokeColor": "#1e1e1e",
+      "roughness": 0,
+      "text": "04 · API 受理、双层签名与 Treasury 提现",
+      "fontSize": 34,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-subtitle",
+      "type": "text",
+      "x": 40,
+      "y": 94,
+      "width": 2360,
+      "height": 44,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "真实入口：TreasuryVault.executeWithdrawal · Domain = Milon Treasury / 1 / chainId / 具体 Treasury",
+      "fontSize": 20,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-zone-0",
+      "type": "rectangle",
+      "x": 30,
+      "y": 180,
+      "width": 2380,
+      "height": 700,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-zone-title-0",
+      "type": "text",
+      "x": 50,
+      "y": 198,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "A. 公网资金 API（规划） → B. 受限 EIP-712 授权与外层 EOA 交易 → C. 链上原子付款",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-zone-1",
+      "type": "rectangle",
+      "x": 30,
+      "y": 960,
+      "width": 2380,
+      "height": 350,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-zone-title-1",
+      "type": "text",
+      "x": 50,
+      "y": 978,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "D. 最终事实驱动正式账务与租户通知",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-api",
+      "type": "rectangle",
+      "x": 60,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e7f5ff",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "1 / POST /v1/withdrawals（规划）\n报价/用户/网络/资产/收款人/金额\nTLS/mTLS + HTTP 验签 + 新 nonce\n固定 Idempotency-Key / external_order_id\n金额为资产最小单位整数字符串"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-transaction",
+      "type": "rectangle",
+      "x": 650,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "2 / PG 受理事务（规划）\n同键同参数返回原订单；冲突 409\n锁定经济参数与用户余额\n用户 Hold = 本金 P + 服务费 F\n订单 + 额度预留 + Outbox 原子提交"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-risk",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "3 / 风控与资金准入（规划）\nKYC/KYT + 用户/池资产 gate\n排除平台所有已发行内部地址\n预留 Treasury 物理余额和在途资金\nRelayer 另预留 Gas，不预留本金"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-authorize",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "4 / 受限提现签名器（规划）\n先持久 AUTHORIZATION_POSSIBLE\n重载订单、批准、域、epoch 并复核\nWITHDRAWAL_SIGNER 签精确 Permit\n高于 councilThreshold 另需 Council"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-relayer",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 600,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "5 / Relayer 外层 EOA 交易\nto = 具体 Treasury；value = 0\nexecuteWithdrawal(p, online, council)\n每 tenant/chain 独立 nonce lane\nraw 与 Permit 加密保存、日志仅引用"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-treasury",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 600,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "6 / Treasury 实时校验\nonlyExecutor / 签名 / 时间 / 白名单\nrisk 全局+资产 epoch / policyEpoch\n无 HOLD、未暂停、余额覆盖预留底线\n非零、非内部、非禁收收款地址"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-atomic",
+      "type": "rectangle",
+      "x": 650,
+      "y": 600,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "7 / 原子业务效果\nconsume(requestId) → Executed\nconsumeLimit(token, amount)\n单笔 + UTC 日 + 25 小时桶共享额度\n精确转账；失败全部回滚"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-payment",
+      "type": "rectangle",
+      "x": 60,
+      "y": 600,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "8 / 外部收款人精确收到 P\n资金本金从 Treasury 流出\n原生币或审核 ERC-20\n双边余额变化严格等于 P\nWithdrawalExecuted 绑定批准摘要"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-final",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1030,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "9 / 规范链最终结果（规划）\n收据 + WithdrawalExecuted\nrequestStatus(requestId) = Executed\n校验 token / to / amount / approval\n未知或重组保留用户 Hold"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-post",
+      "type": "rectangle",
+      "x": 650,
+      "y": 1030,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "10 / 最终付款账务（规划）\n释放提现冻结负债 P+F\n减少 Treasury 托管资产 P\n确认服务费收入 F\n实际 Gas 作为运营费用单独记账"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-outbox",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 1030,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "11 / PG 同事务提交（规划）\n唯一经济效果键防重复过账\n订单 → FINAL_PAID + journal\nOutbox → withdrawal.paid\nledger_seq / 规范块 checkpoint"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-notify",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 1030,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e7f5ff",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "12 / 查询与 Webhook（规划）\nGET /v1/withdrawals/{id}\nPOST 202 只表示受理/冻结\nstable eventId；至少一次投递\n租户校验平台签名并事务去重"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-note0",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1390,
+      "width": 1120,
+      "height": 245,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "失败/超时：txHash 丢失、RPC 查不到、外层 revert、换 Relayer 均不能直接退款。\n同一 Treasury 的同一经济订单使用同 requestId；失败授权可能仍可再次提交。\n取消与付款竞争以最终链状态为准，详见 05。\n合约不会识别不同 requestId 其实是同一商户订单，长期业务唯一性必须由后端保障。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-note1",
+      "type": "rectangle",
+      "x": 1260,
+      "y": 1390,
+      "width": 1120,
+      "height": 245,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "资金上限：普通付款后余额 ≥ totalReserve + Treasury safetyFloor。\n后端另扣独立在途物理预留，不能用账面 available 替代流动性。\n高额判断为 amount > councilThreshold；Council 为独立 ERC-1271 多签。\nroutesPaused 不阻断直接外部提现；要停止提现须用 RiskRegistry 或收紧额度。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-note2",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1720,
+      "width": 2320,
+      "height": 220,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "Permit：requestId / tenantKey / poolId / token / to / amount / approvalDigest / poolEpoch / poolAssetEpoch / policyEpoch / signerEpoch / validAfter / deadline。\nEIP-712 与外层 EOA nonce 是两种执行凭据；一个 nonce 替换屏障不撤销业务授权。\n各授权有效区间最多一小时（建议默认五分钟），链块时间必须位于有效区间；API 通信签名的有效窗口单独管理。\n原生资产 token=address(0)；U256 使用整数字符串/BigInt，enum 编码为 uint8；接入 schema 见 contracts/interfaces/eip712.json。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-0",
+      "type": "arrow",
+      "x": 548,
+      "y": 355,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "认证 / 幂等"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-api"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-transaction"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-1",
+      "type": "arrow",
+      "x": 1138,
+      "y": 355,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "批准前持久"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-transaction"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-risk"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-2",
+      "type": "arrow",
+      "x": 1728,
+      "y": 355,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "冻结资金"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-risk"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-authorize"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-3",
+      "type": "arrow",
+      "x": 2070,
+      "y": 468,
+      "width": 0,
+      "height": 350,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "持久 ACK"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          124
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-authorize"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-relayer"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-4",
+      "type": "arrow",
+      "x": 1822,
+      "y": 705,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "交易提交"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-relayer"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-treasury"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-5",
+      "type": "arrow",
+      "x": 1232,
+      "y": 705,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "检查通过"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-treasury"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-atomic"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-6",
+      "type": "arrow",
+      "x": 642,
+      "y": 705,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "本金 P"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-atomic"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-payment"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-7",
+      "type": "arrow",
+      "x": 300,
+      "y": 818,
+      "width": 0,
+      "height": 430,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "最终事件"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          204
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-payment"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-final"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.375Z",
+      "updatedAt": "2026-10-11T02:22:09.375Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-8",
+      "type": "arrow",
+      "x": 548,
+      "y": 1135,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "已付款证明"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-final"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-post"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.376Z",
+      "updatedAt": "2026-10-11T02:22:09.376Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-9",
+      "type": "arrow",
+      "x": 1138,
+      "y": 1135,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "正式过账"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-post"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-outbox"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.376Z",
+      "updatedAt": "2026-10-11T02:22:09.376Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-04-withdrawal-edge-10",
+      "type": "arrow",
+      "x": 1728,
+      "y": 1135,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "异步通知"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-04-withdrawal-outbox"
+      },
+      "end": {
+        "id": "20261011-04-withdrawal-notify"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:09.376Z",
+      "updatedAt": "2026-10-11T02:22:09.376Z",
+      "version": 1
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  }
+}

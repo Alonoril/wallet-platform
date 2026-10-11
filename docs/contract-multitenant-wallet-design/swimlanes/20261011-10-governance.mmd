@@ -1,0 +1,78 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    config["封存租户部署配置"]
+    plan["PrepareActivation<br>生成公开 calldata"]
+    reload["重载配置 / 重新审批"]
+    terminate["迁移前终结旧授权"]
+  end
+  subgraph GUARD["Guardian / Council"]
+    direction TB
+    schedule["Council 排队提案"]
+    pause["Guardian 先暂停路由"]
+    change["Council 排队变更"]
+    approve["Council 共同批准迁移"]
+  end
+  subgraph AUTH["授权 / 执行（规划）"]
+    direction TB
+    deploy["DeployTenant"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    wait["Timelock 至少两天"]
+    activate["登记池 + 路由 + 额度<br>最后恢复路由"]
+    execute["延迟执行 + epoch 更新"]
+    migrate["同租户批准路由迁移"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    verify["收据 / 代码 / 绑定核验"]
+    check["最终激活证据"]
+    reconcile["旧/新域最终对账"]
+  end
+  config -->|固定 nonce / 链| deploy
+  deploy -->|部署记录| verify
+  verify -->|实际核验通过| plan
+  plan -->|封存提案| schedule
+  schedule -->|scheduleBatch| wait
+  wait -->|executeBatch| activate
+  activate -.->|最终证明| check
+  pause -->|修改路由前| change
+  change -->|延迟治理| execute
+  execute -.->|新版本状态| reload
+  terminate -->|无在途双付| approve
+  approve -->|独立共同批准| migrate
+  migrate -.->|最终迁移| reconcile
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class config,plan,reload,terminate app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef guard fill:#fff0f0,stroke:#e03131,color:#e03131;
+  class schedule,pause,change,approve guard;
+  style GUARD fill:#fff0f0,stroke:#e03131,fill-opacity:0.25,stroke-width:1px
+  classDef auth fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class deploy auth;
+  style AUTH fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class wait,activate,execute,migrate evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class verify,check,reconcile book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class pause blocked;
+  classDef pending fill:#fff4e6,stroke:#e8590c,color:#e8590c;
+  class wait pending;
+  linkStyle 0 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 1 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 2 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 3 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 4 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 5 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 6 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 7 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 8 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 9 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 10 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 11 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 12 stroke:#e8590c,color:#e8590c,stroke-width:2px;

@@ -1,0 +1,84 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph API["租户 / API（规划）"]
+    direction TB
+    pending["控制处理中"]
+    status["GET 充值 / 受限余额"]
+  end
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    alert["重大风险 / 有效冻结"]
+    gate["案件 + 本地关 gate"]
+    downstream["转已归集场景 07"]
+    decision{"案件复核结果？"}
+    resign["按新 epoch 重新审批"]
+  end
+  subgraph GUARD["Guardian / Council"]
+    direction TB
+    guardian["独立应急 nonce lane"]
+    isolate["批准隔离 → 图 08"]
+    release["逐案解除 HOLD"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    hold["addHold(predictedVault)"]
+    cancel["撤销已签 operationId"]
+    remain["同地址该资产留存"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    restricted["冻结可追回负债<br>紧急 Outbox"]
+    final{"控制最终生效？"}
+    position{"资金仍在原址？"}
+  end
+  alert -->|确认控制范围| gate
+  gate -->|同一 PG 事务| restricted
+  restricted -->|控制 job| guardian
+  guardian -->|紧急链命令| hold
+  hold -->|旧授权终结| cancel
+  cancel -.->|最终核验| final
+  final -->|未最终| pending
+  final -->|是| position
+  position -->|已先归集| downstream
+  position -->|仍在原址| remain
+  remain -->|复核| decision
+  decision -->|隔离批准| isolate
+  decision -->|解除本案| release
+  release -->|新控制快照| resign
+  resign -.->|公开状态| status
+  classDef api fill:#e7f5ff,stroke:#1971c2,color:#1971c2;
+  class pending,status api;
+  style API fill:#e7f5ff,stroke:#1971c2,fill-opacity:0.25,stroke-width:1px
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class alert,gate,downstream,decision,resign app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef guard fill:#fff0f0,stroke:#e03131,color:#e03131;
+  class guardian,isolate,release guard;
+  style GUARD fill:#fff0f0,stroke:#e03131,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class hold,cancel,remain evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class restricted,final,position book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class downstream,remain blocked;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#d9480f;
+  class final,position,decision decision;
+  classDef pending fill:#fff4e6,stroke:#e8590c,color:#e8590c;
+  class pending pending;
+  linkStyle 0 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 1 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 2 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 3 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 4 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 5 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 6 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 7 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 8 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 9 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 10 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 11 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 12 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 13 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 14 stroke:#e8590c,color:#e8590c,stroke-width:2px;

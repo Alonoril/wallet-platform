@@ -1,0 +1,835 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw-jetbrains-plugin",
+  "elements": [
+    {
+      "id": "20261011-01-address-deposit-title",
+      "type": "text",
+      "x": 40,
+      "y": 30,
+      "width": 2360,
+      "height": 50,
+      "strokeColor": "#1e1e1e",
+      "roughness": 0,
+      "text": "01 · 地址发行、预充值与后端入账",
+      "fontSize": 34,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-subtitle",
+      "type": "text",
+      "x": 40,
+      "y": 94,
+      "width": 2360,
+      "height": 44,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "API 接入为规划 · Factory/DepositVault 已实现 · 地址发行、部署、风控是三条独立状态轴",
+      "fontSize": 20,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-zone-0",
+      "type": "rectangle",
+      "x": 30,
+      "y": 180,
+      "width": 2380,
+      "height": 650,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-zone-title-0",
+      "type": "text",
+      "x": 50,
+      "y": 198,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "A. 发行地址：不必先部署 Clone，但必须完成发行门槛",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-zone-1",
+      "type": "rectangle",
+      "x": 30,
+      "y": 910,
+      "width": 2380,
+      "height": 670,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-zone-title-1",
+      "type": "text",
+      "x": 50,
+      "y": 928,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "B. 充值观测：最终性和风险审查独立，链上收款不自动记用户账",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-api",
+      "type": "rectangle",
+      "x": 60,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e7f5ff",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "1 / 租户调用（规划）\nPOST /v1/wallets\nPOST /v1/wallets/{id}/addresses\nchain + mode=USER/ORDER + 订单键\n租户身份来自已验签 TenantContext"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-allocate",
+      "type": "rectangle",
+      "x": 650,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "2 / PG 幂等分配（规划）\n生成非零随机 bytes32 walletKey\n永久绑定 tenant / user / order / pool\n保存 factory / salt / initCodeHash\n同请求重试复用原分配"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-predict",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "3 / 预测地址（合约 + 后端）\nFactory.predictVault(walletKey)\n本地 CREATE2 结果与 eth_call 双检\nsalt 固定 chain / tenant / version\nClone init code 包含实现地址"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-gate",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "4 / 发行门槛（规划）\n核对 runtime code hash / 固定 getter\n角色、资产、路由和部署能力\n监听注册 + 出生高度 + 安全窗回填\n预充值后部署演练已验收"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-durable",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 550,
+      "width": 480,
+      "height": 190,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "5 / 发行证据（规划）\n地址映射提交 PG\n加密证据持久 ACK\nissuance → ISSUED\n未完成时只返回 provisioning"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-respond",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 550,
+      "width": 480,
+      "height": 190,
+      "backgroundColor": "#e7f5ff",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "6 / 返回地址（规划）\nGET /v1/wallets/{id}/addresses\nchain / address / mode / assets\ncurrent 与 retired 历史地址并存\n未部署地址也可以正常先收款"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-sender",
+      "type": "rectangle",
+      "x": 60,
+      "y": 995,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e7f5ff",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "A / 用户或第三方链上转入\nERC-20 transfer(predictedVault)\n原生币转入预测/已部署地址\n地址不需要单独充值 Gas\n不能阻止陌生第三方向其打款"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-observe",
+      "type": "rectangle",
+      "x": 650,
+      "y": 995,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "B / 索引器发现（规划）\n精确 token 地址的 Transfer\n原生顶层转账 + 成功执行 trace\n强制余额变化用对账/state diff\n未部署地址没有 Vault 接收事件"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-finality",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 995,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "C / 规范链和最终性（规划）\n去重：chain + txHash + logIndex\n原生币：规范化 call path\n保留 blockHash / parentHash\n网络 finality profile 与覆盖门槛"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-assessment",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 995,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "D / 风险评估（规划）\nALLOW / REVIEW / UNKNOWN / HOLD\n证据、名单版本、扫描 checkpoint\nKYT 不可用 → UNKNOWN\n本地不签新归集授权"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-post",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 1300,
+      "width": 480,
+      "height": 205,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "E / 最终充值入账（规划）\n借：对应地址托管资产\n贷：用户待审查 / 待认领负债\n最终性未满足仅保留待确认记录\n真实资产先记账，不等 KYT 恢复"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-available",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 1300,
+      "width": 480,
+      "height": 205,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "F / 按风险转负债科目（规划）\nALLOW → 可用\nREVIEW / UNKNOWN → 待审查\nHOLD / BLOCK → 风险冻结\n风险控制另见 06，不由入账替代"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-query",
+      "type": "rectangle",
+      "x": 650,
+      "y": 1300,
+      "width": 480,
+      "height": 205,
+      "backgroundColor": "#e7f5ff",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "G / 查询与通知（规划）\nGET /v1/deposits\nGET /v1/balances\ndeposit.risk_pending / credited / held\n链确认 / 风控 / 入账状态分别返回"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-note0",
+      "type": "rectangle",
+      "x": 60,
+      "y": 550,
+      "width": 1040,
+      "height": 190,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "发行后旧地址用途不重绑；未部署且有余额是正常状态。\n链上盐/标识不是密钥。API 租户不能自选 salt、Manager、路由或 Treasury。\n充值归属由永久发行映射确定；用户身份和订单不由链日志自动恢复。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-note1",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1650,
+      "width": 2320,
+      "height": 165,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "API 重点：available、risk_pending、held、pending_chain、ledger_seq 必须独立披露。\n不把非最终事件、未知资产或伪造 token 事件计入可用余额；故障返回可追踪 pending。\n从 Deposit 到 Clearing/Treasury 是内部移动，用户已入账债权不因归集再次增加。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-0",
+      "type": "arrow",
+      "x": 548,
+      "y": 355,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "同租户幂等"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-api"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-allocate"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-1",
+      "type": "arrow",
+      "x": 1138,
+      "y": 355,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "walletKey"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-allocate"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-predict"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-2",
+      "type": "arrow",
+      "x": 1728,
+      "y": 355,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "预测验真"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-predict"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-gate"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-3",
+      "type": "arrow",
+      "x": 2070,
+      "y": 468,
+      "width": 0,
+      "height": 290,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "门槛通过"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          74
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-gate"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-durable"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-4",
+      "type": "arrow",
+      "x": 1822,
+      "y": 645,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "持久确认"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-durable"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-respond"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-5",
+      "type": "arrow",
+      "x": 548,
+      "y": 1100,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "链上事实"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-sender"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-observe"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-6",
+      "type": "arrow",
+      "x": 1138,
+      "y": 1100,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "覆盖 / 去重"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-observe"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-finality"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-7",
+      "type": "arrow",
+      "x": 1728,
+      "y": 1100,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "独立评估"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-finality"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-assessment"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-8",
+      "type": "arrow",
+      "x": 2070,
+      "y": 1213,
+      "width": 0,
+      "height": 302.5,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "最终事实"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          79
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-assessment"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-post"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-9",
+      "type": "arrow",
+      "x": 1822,
+      "y": 1402.5,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "审查决定"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-post"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-available"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    },
+    {
+      "id": "20261011-01-address-deposit-edge-10",
+      "type": "arrow",
+      "x": 1232,
+      "y": 1402.5,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "Outbox"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-01-address-deposit-available"
+      },
+      "end": {
+        "id": "20261011-01-address-deposit-query"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:29.465Z",
+      "updatedAt": "2026-10-11T02:21:29.465Z",
+      "version": 1,
+      "lastCommittedPoint": null
+    }
+  ],
+  "appState": {
+    "gridSize": null,
+    "viewBackgroundColor": "#ffffff"
+  },
+  "files": {}
+}

@@ -1,0 +1,669 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "mcp-excalidraw-server",
+  "elements": [
+    {
+      "id": "20261011-06-risk-isolation-title",
+      "type": "text",
+      "x": 40,
+      "y": 30,
+      "width": 2360,
+      "height": 50,
+      "strokeColor": "#1e1e1e",
+      "roughness": 0,
+      "text": "06 · 风险资金未归集与已归集：控制范围和闭环",
+      "fontSize": 34,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-subtitle",
+      "type": "text",
+      "x": 40,
+      "y": 94,
+      "width": 2360,
+      "height": 44,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "风险裁定来自后端案件与有效审批（规划）；合约只执行控制 · 冻结状态以最终链事实为准",
+      "fontSize": 20,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-zone-0",
+      "type": "rectangle",
+      "x": 30,
+      "y": 180,
+      "width": 1150,
+      "height": 1510,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-zone-title-0",
+      "type": "text",
+      "x": 50,
+      "y": 198,
+      "width": 1110,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "A. 风险资金仍在 DepositVault（含未部署预测地址）",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-zone-1",
+      "type": "rectangle",
+      "x": 1260,
+      "y": 180,
+      "width": 1150,
+      "height": 1510,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-zone-title-1",
+      "type": "text",
+      "x": 1280,
+      "y": 198,
+      "width": 1110,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "B. 风险资金已经到 Clearing / Treasury / Cold",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-a1",
+      "type": "rectangle",
+      "x": 60,
+      "y": 250,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "A1 / 本地事务立即关闭相关新授权（规划）\n案件/证据/rootExposureId + 签名 gate + 用户可追回负债冻结 + 紧急 Outbox 同事务。\n已签提现的 Hold 保留，先追踪付款/撤销；不能直接改成风险 Hold 丢失支付事实。\n普通评分提示先审查，确认重大风险/有效冻结要求后扩大链上控制。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-a2",
+      "type": "rectangle",
+      "x": 60,
+      "y": 535,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "A2 / Guardian 独立应急 nonce lane\nRiskRegistry.addHold(vault, token, false, caseId)\n即使 vault.code.length = 0 也能 HOLD；全资产范围显式 allAssets=true。\nManager.cancelOperation(operationId) 撤销已签业务；HOLD 本身提升 asset epoch。\n部署不解除 HOLD；Guardian 不能解除案件 HOLD。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-a3",
+      "type": "rectangle",
+      "x": 60,
+      "y": 820,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "A3 / 跟踪规范链控制（规划）\nLOCAL_GATED → SUBMITTED → INCLUDED → FINAL_ENFORCED。\n回填控制生效块，按 transactionIndex/logIndex/trace 确认资金真实位置。\n若 Sweep 在 HOLD 前已经执行 → 转场景 B，补控制实际下游池。\n浅重组/Failed/Unknown 时本地 gate 保持关闭，不能声称已经全部阻断。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-a4",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1105,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "A4 / 原址留存是默认方案\nManager 和 DepositVault 都实时校验风险与资金底线，普通归集拒绝。\n同一 Vault：100 正常 + 20 风险 → HOLD 该资产全部 120；不能选出特定来源币。\n未最终入款保留观测；最终风险入款记受限负债，不遗漏实际托管资产。\n第三方仍可继续打入；冻结不等于拒收。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-a5",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1390,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "A5 / 复核后的可行处置\n继续 HOLD 原址；或 Council 明确批准后由 Controller 隔离到 Quarantine（07）。\nController 可独立部署 Vault，不依赖普通 Manager 成功归集。\n解除本案件 HOLD 只解除本案；epoch 不回退，恢复后重新审批/签新授权。\n不得用普通 RiskAuthorizer/Relayer 权限绕过案件限制。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-b1",
+      "type": "rectangle",
+      "x": 1290,
+      "y": 250,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "B1 / 本地关 gate + 追溯实际控制地址（规划）\n按 custody_movements / movement_links / 最终链事件核定 Clearing/Treasury/Cold。\n关闭结算、提现、转冷、回款、迁移的新授权；写逐作用域 incident/Outbox。\n原 Vault HOLD 不会自动冻结下游池；所有实际持有池须分别受控。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-b2",
+      "type": "rectangle",
+      "x": 1290,
+      "y": 535,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "B2 / Guardian 原子 HOLD + 最低预留\napplyPoolAssetHold(pool, token, caseId, minimumReserve)\n同一事务添加本案 HOLD、提升 epoch、提高本案预留下限。\n默认停止该池/资产全部普通流出；旧 Permit 的当前控制校验失败。\n范围不明时维持扩大控制；安全事故另用 SECURITY_PAUSED。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-b3",
+      "type": "rectangle",
+      "x": 1290,
+      "y": 820,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "B3 / 核定义务、可控量、缺口（规划）\n按控制实际生效顺序回填，已转往其他本租户池则追加 scoped control。\nreserve 使用绝对金额 + CAS version；重复告警不重复累计。\n不同案件预留相加；同一义务交叠由后端 reserve allocations 去重。\n冻结原 Vault 或某一个池成功，不代表整条链已完全受控。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-b4",
+      "type": "rectangle",
+      "x": 1290,
+      "y": 1105,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "B4 / Council 明确选择继续控制或有限恢复\n继续 HOLD；或审批完整控制快照，将批准数量原子隔离到 Quarantine（07）。\n普通流出恢复须逐案 releaseHold；残余 HOLD/SECURITY_PAUSED 仍然阻断。\n解除 HOLD 不自动减少 reserve；Guardian 只能增加预留，减少需 Council/Timelock。\n已混合资产不可据 lot 标签宣称物理币已干净。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-b5",
+      "type": "rectangle",
+      "x": 1290,
+      "y": 1390,
+      "width": 1090,
+      "height": 215,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "B5 / 有限恢复的硬条件\n适用源/目标 scope 全部开放 + 新 epoch 授权 + 批准路由/策略/资产。\n转出后余额 ≥ 全部剩余案件 reserve + Treasury safetyFloor。\n后端另外扣在途付款、未知入款和资金预留；同集合不重复扣减。\nreserve > 可控余额时禁止普通流出，不静默缩小风险义务。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-note0",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1780,
+      "width": 720,
+      "height": 350,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "已外付的第三种结果\n链上不能撤回任意外部地址资产。\n继续控制本租户剩余可动用资金。\n记录义务 / 可控量 / 不可用量 / 缺口。\n损失、追偿、运营注资另经审批记账。\n用户债权不被静默冲掉，不能拿其他租户资金补缺。\n发行方冻结与平台暂停分开记录。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-note1",
+      "type": "rectangle",
+      "x": 860,
+      "y": 1780,
+      "width": 720,
+      "height": 350,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "多案件与预留例子\n余额 1000；A reserve 100；B reserve 150；\nTreasury 安全底线 50。\n全部 HOLD 已按批准解除时，链上最多普通转出 700。\nA 的解除/隔离不能消耗 B 的 150。\n后端还需扣独立在途物理预留。\n只要还有任何 HOLD，普通出口仍阻断。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-note2",
+      "type": "rectangle",
+      "x": 1660,
+      "y": 1780,
+      "width": 720,
+      "height": 350,
+      "backgroundColor": "#e7f5ff",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "API / 运维重点（规划）\nGET balances 返回受限负债和快照序号。\nGET deposits 分开确认/风控/入账状态。\n租户 BUSINESS Hold 不能解除风险冻结。\n敏感案件操作仅受限内部 command，非公网资金 API。\n展示“控制请求/广播/包含/最终生效”，\n不能用一次 HTTP 200 宣称冻结完成。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-edge-0",
+      "type": "arrow",
+      "x": 605,
+      "y": 473,
+      "width": 0,
+      "height": 285,
+      "backgroundColor": "transparent",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "紧急控制"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          54
+        ]
+      ],
+      "start": {
+        "id": "20261011-06-risk-isolation-a1"
+      },
+      "end": {
+        "id": "20261011-06-risk-isolation-a2"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-edge-1",
+      "type": "arrow",
+      "x": 605,
+      "y": 758,
+      "width": 0,
+      "height": 285,
+      "backgroundColor": "transparent",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "广播后核验"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          54
+        ]
+      ],
+      "start": {
+        "id": "20261011-06-risk-isolation-a2"
+      },
+      "end": {
+        "id": "20261011-06-risk-isolation-a3"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-edge-2",
+      "type": "arrow",
+      "x": 605,
+      "y": 1043,
+      "width": 0,
+      "height": 285,
+      "backgroundColor": "transparent",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "真实位置仍在原址"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          54
+        ]
+      ],
+      "start": {
+        "id": "20261011-06-risk-isolation-a3"
+      },
+      "end": {
+        "id": "20261011-06-risk-isolation-a4"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-edge-3",
+      "type": "arrow",
+      "x": 605,
+      "y": 1328,
+      "width": 0,
+      "height": 285,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "案件复核"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          54
+        ]
+      ],
+      "start": {
+        "id": "20261011-06-risk-isolation-a4"
+      },
+      "end": {
+        "id": "20261011-06-risk-isolation-a5"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-edge-4",
+      "type": "arrow",
+      "x": 1835,
+      "y": 473,
+      "width": 0,
+      "height": 285,
+      "backgroundColor": "transparent",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "逐池控制"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          54
+        ]
+      ],
+      "start": {
+        "id": "20261011-06-risk-isolation-b1"
+      },
+      "end": {
+        "id": "20261011-06-risk-isolation-b2"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-edge-5",
+      "type": "arrow",
+      "x": 1835,
+      "y": 758,
+      "width": 0,
+      "height": 285,
+      "backgroundColor": "transparent",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "最终状态追踪"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          54
+        ]
+      ],
+      "start": {
+        "id": "20261011-06-risk-isolation-b2"
+      },
+      "end": {
+        "id": "20261011-06-risk-isolation-b3"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-edge-6",
+      "type": "arrow",
+      "x": 1835,
+      "y": 1043,
+      "width": 0,
+      "height": 285,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "复核审批"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          54
+        ]
+      ],
+      "start": {
+        "id": "20261011-06-risk-isolation-b3"
+      },
+      "end": {
+        "id": "20261011-06-risk-isolation-b4"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-06-risk-isolation-edge-7",
+      "type": "arrow",
+      "x": 1835,
+      "y": 1328,
+      "width": 0,
+      "height": 285,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "批准后恢复"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          54
+        ]
+      ],
+      "start": {
+        "id": "20261011-06-risk-isolation-b4"
+      },
+      "end": {
+        "id": "20261011-06-risk-isolation-b5"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:22:45.136Z",
+      "updatedAt": "2026-10-11T02:22:45.136Z",
+      "version": 1
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  }
+}

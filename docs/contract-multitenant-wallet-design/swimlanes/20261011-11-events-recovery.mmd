@@ -1,0 +1,76 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    facts["事件 + 状态 getter"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    coverage["规范链 / 覆盖 / 去重"]
+    final{"最终性满足？"}
+    match["域/ID/经济效果匹配"]
+    reconcile["联合 checkpoint 对账"]
+    reorg["重组 / 数据库恢复"]
+    replay["恢复映射 / 证据<br>规范链回放"]
+    checked{"全部事实对账通过？"}
+  end
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    pending["待确认 / 保留 Hold"]
+    post["journal + 状态 + Outbox"]
+    lock["RECOVERY_LOCKED"]
+    closed["继续锁定"]
+    resume["恢复发行与出金"]
+  end
+  subgraph API["租户 / API（规划）"]
+    direction TB
+    notice["Webhook 签名通知"]
+    dedupe["事务去重 eventId"]
+    query["GET 状态 / 事件补拉"]
+  end
+  facts -.->|链上事实| coverage
+  coverage --> final
+  final -->|否| pending
+  final -->|是| match
+  match -->|唯一经济效果| post
+  post -.->|同事务 Outbox| notice
+  notice -->|至少一次| dedupe
+  dedupe -->|补偿查询| query
+  query -->|快照序号| reconcile
+  reorg -->|先锁定| lock
+  lock -->|恢复材料| replay
+  replay -->|核验全部域| checked
+  checked -->|否| closed
+  checked -->|是| resume
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class facts evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class coverage,final,match,reconcile,reorg,replay,checked book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class pending,post,lock,closed,resume app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef api fill:#e7f5ff,stroke:#1971c2,color:#1971c2;
+  class notice,dedupe,query api;
+  style API fill:#e7f5ff,stroke:#1971c2,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class reorg,lock blocked;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#d9480f;
+  class final,checked decision;
+  classDef pending fill:#fff4e6,stroke:#e8590c,color:#e8590c;
+  class pending,closed pending;
+  linkStyle 0 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 1 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 2 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 3 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 4 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 5 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 6 stroke:#1971c2,color:#1971c2,stroke-width:2px;
+  linkStyle 7 stroke:#1971c2,color:#1971c2,stroke-width:2px;
+  linkStyle 8 stroke:#1971c2,color:#1971c2,stroke-width:2px;
+  linkStyle 9 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 10 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 11 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 12 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 13 stroke:#0c8599,color:#0c8599,stroke-width:2px;

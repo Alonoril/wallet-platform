@@ -1,0 +1,778 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "mcp-excalidraw-server",
+  "elements": [
+    {
+      "id": "20261011-08-custody-governance-title",
+      "type": "text",
+      "x": 40,
+      "y": 30,
+      "width": 2360,
+      "height": 50,
+      "strokeColor": "#1e1e1e",
+      "roughness": 0,
+      "text": "08 · 部署激活、离线治理、转冷回款与迁移",
+      "fontSize": 34,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.611Z",
+      "updatedAt": "2026-10-11T02:23:02.611Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-subtitle",
+      "type": "text",
+      "x": 40,
+      "y": 94,
+      "width": 2360,
+      "height": 44,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "Governor = TenantTimelock；Council = 独立 ERC-1271 多签 · 冷池仍是受统一风控约束的链上合约",
+      "fontSize": 20,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.611Z",
+      "updatedAt": "2026-10-11T02:23:02.611Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-zone-0",
+      "type": "rectangle",
+      "x": 30,
+      "y": 180,
+      "width": 2380,
+      "height": 440,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:23:02.611Z",
+      "updatedAt": "2026-10-11T02:23:02.611Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-zone-title-0",
+      "type": "text",
+      "x": 50,
+      "y": 198,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "A. 受控部署与激活（已实现脚本 + 离线多签执行）",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.611Z",
+      "updatedAt": "2026-10-11T02:23:02.611Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-zone-1",
+      "type": "rectangle",
+      "x": 30,
+      "y": 700,
+      "width": 2380,
+      "height": 760,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:23:02.611Z",
+      "updatedAt": "2026-10-11T02:23:02.611Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-zone-title-1",
+      "type": "text",
+      "x": 50,
+      "y": 718,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "B. 普通托管转移：Treasury → Cold → Treasury（已实现）",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.611Z",
+      "updatedAt": "2026-10-11T02:23:02.611Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-zone-2",
+      "type": "rectangle",
+      "x": 30,
+      "y": 1540,
+      "width": 2380,
+      "height": 620,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:23:02.611Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-zone-title-2",
+      "type": "text",
+      "x": 50,
+      "y": 1558,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "C. 治理变更、紧急控制与同租户版本迁移",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-deploy",
+      "type": "rectangle",
+      "x": 60,
+      "y": 250,
+      "width": 680,
+      "height": 275,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "1 / DeployTenant：固定 11 笔 CREATE\n预绑定 Factory/Controller 及其他合约地址\n固定编译/依赖，部署账号 chainId/nonce 检查\nmanifest 标记 planned，须核验真实收据/代码/getter\n初始 routesPaused=true，池未登记，普通额度为零\n部署者不保留管理员权限"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-prepare",
+      "type": "rectangle",
+      "x": 880,
+      "y": 250,
+      "width": 680,
+      "height": 275,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "2 / PrepareActivation：只生成提案，不广播\n核对实际 manifest、runtime hash 与固定绑定\n16 + token数量 项激活 calldata\n登记 Treasury/Clearing/Quarantine/Cold\n明确路由 + 各资产额度，最后恢复路由\n默认走 Clearing；直达 Treasury 归集默认关闭"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-activate",
+      "type": "rectangle",
+      "x": 1700,
+      "y": 250,
+      "width": 680,
+      "height": 275,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "3 / Council → TenantTimelock\nscheduleBatch → 等待至少两天 → executeBatch\n原子执行：登记、路由、额度、恢复\n等待期提案改变须重新排队\nTimelock 禁止把 delay 降到两天以下\n后台按真实治理收据和最终状态验收"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-treasury",
+      "type": "rectangle",
+      "x": 60,
+      "y": 790,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "4 / Treasury 转冷提案（规划）\nTransferPermit.kind = Rebalance\ndestination = 登记 Cold\nTRANSFER_SIGNER 精确批准\n高于金额阈值另需 Council"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-transfer",
+      "type": "rectangle",
+      "x": 650,
+      "y": 790,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "5 / Treasury.transferCustody\nonlyExecutor；在线签名+必要多签\nrouteEpoch / policyEpoch / 双边 epochs\n无 HOLD/暂停；登记路由和代码 hash\n消费一次性 operationId"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-limits",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 790,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "6 / 普通转冷原子检查\n源余额 ≥ reserve + Treasury底线\n源/目标当前开放\nPoolRegistry.consumeLimit\n与提现、冷池回款共用预算"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-cold",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 790,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "7 / Cold 受限保管\n精确转入金额 + TreasuryTransferred\n不提供任意外部付款\n不接受 EOA/Safe 代替受控 ColdVault\n后端只记资产位置迁移"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-return",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 1130,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "8 / Cold.returnToTreasury\nkind = Rebalance；目标登记 Treasury\nTRANSFER_SIGNER + Council 每笔必需\nDomain = Milon Cold / 1\n任何金额都需要独立离线共同批准"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-check",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 1130,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "9 / 回款当前控制\n源/目标全局与资产 epochs\nrouteEpoch / policyEpoch / 未暂停\n源余额覆盖剩余 reserve\n消费共享普通出金额度"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-event",
+      "type": "rectangle",
+      "x": 650,
+      "y": 1130,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "10 / 精确回款 + ColdReturned\n消费 operationId / 转账同事务\n失败全部回滚，授权仍可能有效\n规范链最终事件与状态核对\nPG 更新 movement / Outbox"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-back",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1130,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "11 / 返回登记 Treasury\n为本租户提供已批准流动性\n用户总负债不变化\n双向调拨分别消费共享预算\n不能把链上预留当作可支付资本"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-emergency",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1630,
+      "width": 720,
+      "height": 400,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "Guardian 即时收紧 / 暂停\nHOLD、SECURITY_PAUSED、提高 reserve\nsetRoutesPaused(true)、tightenLimits\n撤销 executor / 停用 asset\n不能解除 HOLD、降 reserve 或恢复路由。\n重要：routesPaused 只拦需 route 的移动，\n不阻断 Treasury.executeWithdrawal。\n全面停止提现须用相应风险控制/额度。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-governance",
+      "type": "rectangle",
+      "x": 860,
+      "y": 1630,
+      "width": 720,
+      "height": 400,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "Council / Timelock 的变更权限\nCouncil：逐案 releaseHold、减少 reserve、\n专项处置与必要共同签名。\nTimelock：角色/额度/资产/池登记、路由修改、\nSECURITY_PAUSED 恢复；延迟至少两天。\n改路由前先暂停，修改后 routeEpoch 增加；\n扩权和恢复不走 Guardian 在线捷径。\nsigner/asset/policy 改变撤销相应旧授权。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-migration",
+      "type": "rectangle",
+      "x": 1660,
+      "y": 1630,
+      "width": 720,
+      "height": 400,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "同租户版本迁移（规划 + 合约）\n先终结旧池在途授权并最终对账。\nTreasury.transferCustody(kind=Migration)：\nTRANSFER_SIGNER + Council，仍检查风险/预算。\nClearing.settle 到 Clearing：Council，保留 maturity。\n新 Treasury 不继承旧 requestId 去重映射。\nCold/Quarantine 无普通 Migration 路由。\n旧地址持续监听；不依赖销毁后原址升级。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-note0",
+      "type": "rectangle",
+      "x": 60,
+      "y": 2220,
+      "width": 2320,
+      "height": 85,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "API 重点：租户不自选 Treasury、签名密钥、路由或 calldata；资金调度/治理属于受限内部 command。\n变更后后端重载 ABI、代码清单和 epoch，再批准新授权；部署模拟产生的 planned manifest 不能当作生产已部署证据。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-edge-0",
+      "type": "arrow",
+      "x": 748,
+      "y": 387.5,
+      "width": 820,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "实际代码核验"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          124,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-08-custody-governance-deploy"
+      },
+      "end": {
+        "id": "20261011-08-custody-governance-prepare"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-edge-1",
+      "type": "arrow",
+      "x": 1568,
+      "y": 387.5,
+      "width": 820,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "封存提案"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          124,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-08-custody-governance-prepare"
+      },
+      "end": {
+        "id": "20261011-08-custody-governance-activate"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-edge-2",
+      "type": "arrow",
+      "x": 548,
+      "y": 895,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "精确授权"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-08-custody-governance-treasury"
+      },
+      "end": {
+        "id": "20261011-08-custody-governance-transfer"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-edge-3",
+      "type": "arrow",
+      "x": 1138,
+      "y": 895,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "实时检查"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-08-custody-governance-transfer"
+      },
+      "end": {
+        "id": "20261011-08-custody-governance-limits"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-edge-4",
+      "type": "arrow",
+      "x": 1728,
+      "y": 895,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "转冷"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-08-custody-governance-limits"
+      },
+      "end": {
+        "id": "20261011-08-custody-governance-cold"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-edge-5",
+      "type": "arrow",
+      "x": 2070,
+      "y": 1008,
+      "width": 0,
+      "height": 340,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "批准回款"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          114
+        ]
+      ],
+      "start": {
+        "id": "20261011-08-custody-governance-cold"
+      },
+      "end": {
+        "id": "20261011-08-custody-governance-return"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-edge-6",
+      "type": "arrow",
+      "x": 1822,
+      "y": 1235,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "双签验证"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-08-custody-governance-return"
+      },
+      "end": {
+        "id": "20261011-08-custody-governance-check"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-edge-7",
+      "type": "arrow",
+      "x": 1232,
+      "y": 1235,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "原子执行"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-08-custody-governance-check"
+      },
+      "end": {
+        "id": "20261011-08-custody-governance-event"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-08-custody-governance-edge-8",
+      "type": "arrow",
+      "x": 642,
+      "y": 1235,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "最终内移"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-08-custody-governance-event"
+      },
+      "end": {
+        "id": "20261011-08-custody-governance-back"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:02.612Z",
+      "updatedAt": "2026-10-11T02:23:02.612Z",
+      "version": 1
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  }
+}

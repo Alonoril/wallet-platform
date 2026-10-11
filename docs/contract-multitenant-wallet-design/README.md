@@ -26,6 +26,9 @@
 | [04 业务、账本与数据](20261010-04-flows-ledger-and-storage.md) | 充值、提现、幂等、表约束、对账、API |
 | [05 工程、运维与验收](20261010-05-delivery-and-operations.md) | Rust 工程、成本模型、上线门槛、迁移、故障恢复 |
 | [06 合约实现与验收记录](20261010-06-solidity-implementation.md) | 已落地模块、签名/控制协议、部署激活、本地验证和生产待办 |
+| [07 流程图与 API 接入](20261011-07-evm-flowcharts-and-api.md) | 彩色泳道、API/合约映射、归集前后风险控制、取消与最终过账 |
+
+[打开彩色流程图册](swimlanes/index.html) · [Mermaid 源码与预览](swimlanes/README.md) · [保留的原方块图](flows/README.md)。
 
 ## 依据及采用范围
 

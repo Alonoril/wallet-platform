@@ -1,0 +1,82 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph API["租户 / API（规划）"]
+    direction TB
+    req["POST 取消提现"]
+    reply["cancellation_requested"]
+    notify["GET 订单 / Webhook"]
+  end
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    gate["永久关闭再授权 gate"]
+    possible{"授权可能发生过？"}
+    proof["完整未签证明"]
+  end
+  subgraph GUARD["Guardian / Council"]
+    direction TB
+    submit["提交 cancelWithdrawal"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    status{"requestId 当前状态？"}
+    cancelled["Unused → Cancelled"]
+    paid["已 Executed<br>取消拒绝"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    final{"取消最终且未付款？"}
+    uncertain["保留 Hold + 追踪"]
+    refund["释放 / 转风险 Hold<br>cancelled Outbox"]
+    paidpost["按已付款最终过账"]
+  end
+  req -->|幂等取消| gate
+  gate -->|受理响应| reply
+  gate -->|审计全部授权| possible
+  possible -->|否| proof
+  possible -->|是 / 不确定| submit
+  proof -->|无付款可能| refund
+  submit -->|受控链命令| status
+  status -->|Unused / Cancelled| cancelled
+  status -->|Executed| paid
+  cancelled -.->|最终事实| final
+  final -->|是| refund
+  final -->|未最终| uncertain
+  paid -.->|最终付款| paidpost
+  refund -.->|已取消| notify
+  paidpost -.->|已付款| notify
+  classDef api fill:#e7f5ff,stroke:#1971c2,color:#1971c2;
+  class req,reply,notify api;
+  style API fill:#e7f5ff,stroke:#1971c2,fill-opacity:0.25,stroke-width:1px
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class gate,possible,proof app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef guard fill:#fff0f0,stroke:#e03131,color:#e03131;
+  class submit guard;
+  style GUARD fill:#fff0f0,stroke:#e03131,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class status,cancelled,paid evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class final,uncertain,refund,paidpost book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class paid blocked;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#d9480f;
+  class possible,status,final decision;
+  classDef pending fill:#fff4e6,stroke:#e8590c,color:#e8590c;
+  class uncertain pending;
+  linkStyle 0 stroke:#1971c2,color:#1971c2,stroke-width:2px;
+  linkStyle 1 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 2 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 3 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 4 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 5 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 6 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 7 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 8 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 9 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 10 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 11 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 12 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 13 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 14 stroke:#e8590c,color:#e8590c,stroke-width:2px;

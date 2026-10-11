@@ -1,0 +1,591 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "mcp-excalidraw-server",
+  "elements": [
+    {
+      "id": "20261011-03-clearing-settlement-title",
+      "type": "text",
+      "x": 40,
+      "y": 30,
+      "width": 2360,
+      "height": 50,
+      "strokeColor": "#1e1e1e",
+      "roughness": 0,
+      "text": "03 · Clearing 观察期结算与 lot 管理",
+      "fontSize": 34,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-subtitle",
+      "type": "text",
+      "x": 40,
+      "y": 94,
+      "width": 2360,
+      "height": 44,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "真实入口：ClearingVault.settle · Domain = Milon Clearing / 1 / chainId / 具体 Clearing",
+      "fontSize": 20,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-zone-0",
+      "type": "rectangle",
+      "x": 30,
+      "y": 180,
+      "width": 2380,
+      "height": 680,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-zone-title-0",
+      "type": "text",
+      "x": 50,
+      "y": 198,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "普通结算：Clearing → 登记 Treasury；授权不直接包含总额，总额由 lot 分项计算",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-zone-1",
+      "type": "rectangle",
+      "x": 30,
+      "y": 940,
+      "width": 2380,
+      "height": 390,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-zone-title-1",
+      "type": "text",
+      "x": 50,
+      "y": 958,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "特殊分支：Clearing 迁移和未归属直接来款",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-lots",
+      "type": "rectangle",
+      "x": 60,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "1 / 到期 lot 筛选（规划）\n读取 lots[lotId] / outstanding[token]\n同一资产；未释放量足够\n链时间到期；来源/目标无 HOLD\n未知直入款不加入结算候选"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-approval",
+      "type": "rectangle",
+      "x": 650,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "2 / 固定集合批准（规划）\nlotIds[] + amounts[]；1—50 项\n禁止重复 lotId；允许分批释放\nlotsHash = keccak256(abi.encode(...))\n绑定 evidenceDigest 与 operationId"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-sign",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "3 / SettlementAuthorizer（规划）\nSETTLEMENT_SIGNER 签名\n绑定源/目标全局与资产 epochs\nrouteEpoch / signerEpoch / 有效期\nhashSettlement 比对并持久 ACK"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-execute",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 250,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "4 / Relayer → settle(...)\nonlyExecutor + nonReentrant\n签名、时间、资产、租户、hash 校验\nPoolRegistry.assertRoute(Settlement)\n目标 Treasury 当前开放"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-release",
+      "type": "rectangle",
+      "x": 1830,
+      "y": 590,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "5 / 原子释放 lot\n消费 operationId\n逐项核对成熟时间与余额\nreleased += amount；outstanding 减总额\n累计释放不得超原 lot 金额"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-transfer",
+      "type": "rectangle",
+      "x": 1240,
+      "y": 590,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "6 / 精确转账到 Treasury\nrisk.assertSpendable(source,...)\n普通源池无 HOLD/安全暂停\n转出后余额 ≥ 全部案件预留\nExactTransfer 核对双边余额差"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-receipt",
+      "type": "rectangle",
+      "x": 650,
+      "y": 590,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "7 / 最终链证据（规划）\nLotReleased（每个 lot 分项）\nSettlementExecuted（总额）\noperationStatus = Executed\n失败整笔回滚，旧 Permit 仍可能有效"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-ledger",
+      "type": "rectangle",
+      "x": 60,
+      "y": 590,
+      "width": 480,
+      "height": 210,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "8 / PG 镜像与账本（规划）\nlot released / movement 去重\n借 Treasury 资产，贷 Clearing 资产\n用户总负债/可用不因结算再增加\n联动 Outbox 和对账 checkpoint"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-migration",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1020,
+      "width": 1120,
+      "height": 235,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "迁移 Clearing → 同租户登记 Clearing（需配置 Migration 路由）\n同一 SettlementPermit + SETTLEMENT_SIGNER + 独立 Council；双边普通风险检查。\n源 lot 可以尚未到期；importLots 保留原 maturity，不可把迁移当作观察期已通过。\n新 lotId 绑定源池、迁移 operationId、旧 lotId；迁移并非公开支付入口。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-unknown",
+      "type": "rectangle",
+      "x": 1260,
+      "y": 1020,
+      "width": 1120,
+      "height": 235,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "ERC-20 / 原生币直接打入 Clearing：没有 Manager.recordLot，不产生可结算额度。\n后端先记待认领负债、对账并形成案件。\n隔离无 lot 资金只可用余额超出 outstanding 的部分（07）。\n登记 lot 的案件处置必须签 lotsHash 并原子扣减，避免后来重复 settle。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-note0",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1420,
+      "width": 2320,
+      "height": 235,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "API 重点：不提供租户任意结算/自选 Treasury 接口；后端调度结算，查询可展示 custody_location 与观察期状态（字段为接入建议）。\n观察期为部署时不可变 observationWindow，不代表链最终性，也不证明 token 来源安全。\n同池同资产已混合；重大风险默认暂停该池/资产全部普通结算，逐 lot 账面标识不能挑选物理“干净币”。\nClearing 不调用普通支付额度计数；Treasury/Cold 的提现与普通托管转移另共用出金预算（08）。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-edge-0",
+      "type": "arrow",
+      "x": 548,
+      "y": 355,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "到期候选"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-03-clearing-settlement-lots"
+      },
+      "end": {
+        "id": "20261011-03-clearing-settlement-approval"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-edge-1",
+      "type": "arrow",
+      "x": 1138,
+      "y": 355,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "集合 hash"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-03-clearing-settlement-approval"
+      },
+      "end": {
+        "id": "20261011-03-clearing-settlement-sign"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-edge-2",
+      "type": "arrow",
+      "x": 1728,
+      "y": 355,
+      "width": 590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "精确 calldata"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          94,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-03-clearing-settlement-sign"
+      },
+      "end": {
+        "id": "20261011-03-clearing-settlement-execute"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-edge-3",
+      "type": "arrow",
+      "x": 2070,
+      "y": 468,
+      "width": 0,
+      "height": 340,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "全部校验"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          114
+        ]
+      ],
+      "start": {
+        "id": "20261011-03-clearing-settlement-execute"
+      },
+      "end": {
+        "id": "20261011-03-clearing-settlement-release"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:59.596Z",
+      "updatedAt": "2026-10-11T02:21:59.596Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-edge-4",
+      "type": "arrow",
+      "x": 1822,
+      "y": 695,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "lot 数量合计"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-03-clearing-settlement-release"
+      },
+      "end": {
+        "id": "20261011-03-clearing-settlement-transfer"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:59.597Z",
+      "updatedAt": "2026-10-11T02:21:59.597Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-edge-5",
+      "type": "arrow",
+      "x": 1232,
+      "y": 695,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "链事件"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-03-clearing-settlement-transfer"
+      },
+      "end": {
+        "id": "20261011-03-clearing-settlement-receipt"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:59.597Z",
+      "updatedAt": "2026-10-11T02:21:59.597Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-03-clearing-settlement-edge-6",
+      "type": "arrow",
+      "x": 642,
+      "y": 695,
+      "width": -590,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "最终事实"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -94,
+          0
+        ]
+      ],
+      "start": {
+        "id": "20261011-03-clearing-settlement-receipt"
+      },
+      "end": {
+        "id": "20261011-03-clearing-settlement-ledger"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:21:59.597Z",
+      "updatedAt": "2026-10-11T02:21:59.597Z",
+      "version": 1
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  }
+}

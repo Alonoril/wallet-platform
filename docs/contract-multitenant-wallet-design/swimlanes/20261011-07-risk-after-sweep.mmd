@@ -1,0 +1,84 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    alert["建立 incident + 关 gate"]
+    scope["逐池 / 逐资产 control"]
+    exposure["核定义务 / 可控量 / 缺口"]
+    resume["新授权 / 有限恢复"]
+    blocked["继续阻断"]
+  end
+  subgraph GUARD["Guardian / Council"]
+    direction TB
+    command["应急 HOLD + 最低预留"]
+    review{"Council 决定？"}
+    quarantine["批准隔离 → 图 08"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    hold["applyPoolAssetHold"]
+    check["普通出口实时阻断"]
+    reserve["绝对 reserve + CAS"]
+    keep["继续 HOLD"]
+    open["逐案解除 / 保留预留"]
+    spend{"全控制开放<br>且覆盖底线？"}
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    locate["追溯实际资金池"]
+    final["逐 scope 最终核验"]
+    follow["回填到控制生效块<br>下游追加控制"]
+    deficit["已外付：持续记缺口"]
+  end
+  alert -->|查 movement| locate
+  locate -->|真实持有位置| scope
+  scope -->|逐 scope job| command
+  command -->|原子控制| hold
+  hold -->|HOLD + epoch| check
+  hold -.->|最终事实| final
+  final --> follow
+  follow -->|敞口事实| exposure
+  exposure -->|版本化绝对量| reserve
+  reserve -->|复核批准| review
+  review -->|继续| keep
+  review -->|隔离| quarantine
+  review -->|有限恢复| open
+  open -->|仍查其他案件| spend
+  spend -->|是| resume
+  spend -->|否| blocked
+  exposure -.->|不可逆外付| deficit
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class alert,scope,exposure,resume,blocked app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef guard fill:#fff0f0,stroke:#e03131,color:#e03131;
+  class command,review,quarantine guard;
+  style GUARD fill:#fff0f0,stroke:#e03131,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class hold,check,reserve,keep,open,spend evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class locate,final,follow,deficit book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class check,keep,deficit blocked;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#d9480f;
+  class review,spend decision;
+  classDef pending fill:#fff4e6,stroke:#e8590c,color:#e8590c;
+  class blocked pending;
+  linkStyle 0 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 1 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 2 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 3 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 4 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 5 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 6 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 7 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 8 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 9 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 10 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 11 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 12 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 13 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 14 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 15 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 16 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;

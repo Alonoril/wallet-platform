@@ -1,0 +1,72 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph API["租户 / API（规划）"]
+    direction TB
+    req["POST 申请地址"]
+    pending["provisioning"]
+    return["返回地址 / 资产范围"]
+    deposit["可向未部署地址充值"]
+  end
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    check["认证租户 + 幂等"]
+    allocate["分配非零 walletKey<br>永久用户/订单归属"]
+    verify{"本地预测与链上相等？"}
+    bad["异常阻断发行"]
+    gate{"发行门槛全部通过？"}
+    issued["设置 ISSUED"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    predict["Factory.predictVault"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    watch["注册监控 + 回填"]
+    persist["地址映射 + 证据 ACK"]
+    observe["未部署地址也监听"]
+  end
+  req -->|认证请求| check
+  check --> allocate
+  allocate -->|walletKey| predict
+  predict -->|eth_call| verify
+  verify -->|否| bad
+  verify -->|是| watch
+  watch -->|覆盖证据| gate
+  gate -->|未通过| pending
+  gate -->|通过| persist
+  persist -->|持久确认| issued
+  issued -->|发行响应| return
+  return --> deposit
+  deposit -.->|链事实| observe
+  classDef api fill:#e7f5ff,stroke:#1971c2,color:#1971c2;
+  class req,pending,return,deposit api;
+  style API fill:#e7f5ff,stroke:#1971c2,fill-opacity:0.25,stroke-width:1px
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class check,allocate,verify,bad,gate,issued app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class predict evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class watch,persist,observe book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class bad blocked;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#d9480f;
+  class verify,gate decision;
+  classDef pending fill:#fff4e6,stroke:#e8590c,color:#e8590c;
+  class pending pending;
+  linkStyle 0 stroke:#1971c2,color:#1971c2,stroke-width:2px;
+  linkStyle 1 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 2 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 3 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 4 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 5 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 6 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 7 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 8 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 9 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 10 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 11 stroke:#1971c2,color:#1971c2,stroke-width:2px;
+  linkStyle 12 stroke:#e8590c,color:#e8590c,stroke-width:2px;

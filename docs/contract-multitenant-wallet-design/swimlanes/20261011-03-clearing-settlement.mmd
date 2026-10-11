@@ -1,0 +1,73 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    select["筛选同资产未释放 lot"]
+    maturity{"链上观察期到期？"}
+    wait["等待到期"]
+    lots["固定 lotIds / amounts<br>lotsHash + 证据"]
+  end
+  subgraph AUTH["授权 / 执行（规划）"]
+    direction TB
+    sign["持久准入<br>签 SettlementPermit"]
+    settleTx["Relayer 调用 settle"]
+    council["迁移另需 Council"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    verify{"路由/双边风险通过？"}
+    fail["整笔回滚"]
+    release["消费 ID + 释放 lot"]
+    transfer["精确转入 Treasury"]
+    migration["迁移到登记 Clearing"]
+    import["importLots 保留 maturity"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    events["最终事件 + 状态核对"]
+    post["lot 镜像 / 内部迁移"]
+  end
+  select --> maturity
+  maturity -->|否| wait
+  maturity -->|是| lots
+  lots -->|集合批准| sign
+  sign --> settleTx
+  settleTx -->|调用结算| verify
+  verify -->|否| fail
+  verify -->|是| release
+  release -->|同事务| transfer
+  transfer -.->|最终事实| events
+  events -->|过账| post
+  council -->|迁移授权| migration
+  migration -->|原 maturity| import
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class select,maturity,wait,lots app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef auth fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class sign,settleTx,council auth;
+  style AUTH fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class verify,fail,release,transfer,migration,import evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class events,post book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class fail blocked;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#d9480f;
+  class maturity,verify decision;
+  classDef pending fill:#fff4e6,stroke:#e8590c,color:#e8590c;
+  class wait pending;
+  linkStyle 0 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 1 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 2 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 3 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 4 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 5 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 6 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 7 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 8 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 9 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 10 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 11 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 12 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;

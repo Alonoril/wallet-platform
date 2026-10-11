@@ -1,0 +1,82 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    coldPlan["本租户转冷批准"]
+    returnPlan["回款流动性批准"]
+  end
+  subgraph GUARD["Guardian / Council"]
+    direction TB
+    co["Council 共同签名"]
+    returnCo["每笔 Council"]
+  end
+  subgraph AUTH["授权 / 执行（规划）"]
+    direction TB
+    sign["签 TransferPermit"]
+    threshold{"高于阈值？"}
+    send["提交 transferCustody"]
+    returnSign["TRANSFER_SIGNER<br>+ Council 授权"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    verify{"风险/路由/预算通过？"}
+    blocked["整笔回滚"]
+    cold["Treasury → Cold"]
+    return["Cold.returnToTreasury"]
+    check["双边控制 / 共享预算"]
+    treasury["只回登记 Treasury"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    post["最终内部迁移"]
+    final["ColdReturned<br>最终资产内移"]
+  end
+  coldPlan -->|精确参数| sign
+  sign --> threshold
+  threshold -->|是| co
+  threshold -->|否| send
+  co -->|共同授权| send
+  send -->|Rebalance| verify
+  verify -->|否| blocked
+  verify -->|是| cold
+  cold -.->|最终事件| post
+  returnPlan -->|每笔离线批准| returnCo
+  returnCo -->|共同授权| returnSign
+  returnSign -->|提交回款| return
+  return -->|实时检查| check
+  check -->|检查通过| treasury
+  treasury -.->|最终事件| final
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class coldPlan,returnPlan app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef guard fill:#fff0f0,stroke:#e03131,color:#e03131;
+  class co,returnCo guard;
+  style GUARD fill:#fff0f0,stroke:#e03131,fill-opacity:0.25,stroke-width:1px
+  classDef auth fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class sign,threshold,send,returnSign auth;
+  style AUTH fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class verify,blocked,cold,return,check,treasury evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class post,final book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class blocked blocked;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#d9480f;
+  class threshold,verify decision;
+  linkStyle 0 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 1 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 2 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 3 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 4 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 5 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 6 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 7 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 8 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 9 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 10 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 11 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 12 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 13 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 14 stroke:#e8590c,color:#e8590c,stroke-width:2px;

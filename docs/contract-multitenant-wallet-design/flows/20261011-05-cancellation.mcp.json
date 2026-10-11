@@ -1,0 +1,539 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "mcp-excalidraw-server",
+  "elements": [
+    {
+      "id": "20261011-05-cancellation-title",
+      "type": "text",
+      "x": 40,
+      "y": 30,
+      "width": 2360,
+      "height": 50,
+      "strokeColor": "#1e1e1e",
+      "roughness": 0,
+      "text": "05 · 提现取消、退款证明与执行竞态",
+      "fontSize": 34,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-subtitle",
+      "type": "text",
+      "x": 40,
+      "y": 94,
+      "width": 2360,
+      "height": 44,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "真实入口：TreasuryVault.cancelWithdrawal / requestStatus · 取消入口在普通暂停时仍可用",
+      "fontSize": 20,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-zone-0",
+      "type": "rectangle",
+      "x": 30,
+      "y": 180,
+      "width": 2380,
+      "height": 320,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-zone-title-0",
+      "type": "text",
+      "x": 50,
+      "y": 198,
+      "width": 2340,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "A. API 取消受理：只是开始取消流程，先永久关闭该业务的重新授权准入",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-zone-1",
+      "type": "rectangle",
+      "x": 30,
+      "y": 580,
+      "width": 740,
+      "height": 735,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-zone-title-1",
+      "type": "text",
+      "x": 50,
+      "y": 598,
+      "width": 700,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "B1. 任意授权签名可能发生之前",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-zone-2",
+      "type": "rectangle",
+      "x": 850,
+      "y": 580,
+      "width": 740,
+      "height": 735,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-zone-title-2",
+      "type": "text",
+      "x": 870,
+      "y": 598,
+      "width": 700,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "B2. 已签名或签名结果不确定",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-zone-3",
+      "type": "rectangle",
+      "x": 1670,
+      "y": 580,
+      "width": 740,
+      "height": 735,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#ced4da",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-zone-title-3",
+      "type": "text",
+      "x": 1690,
+      "y": 598,
+      "width": 700,
+      "height": 32,
+      "strokeColor": "#495057",
+      "roughness": 0,
+      "text": "B3. 付款已经先执行",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-api",
+      "type": "rectangle",
+      "x": 60,
+      "y": 250,
+      "width": 700,
+      "height": 170,
+      "backgroundColor": "#e7f5ff",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "1 / POST /v1/withdrawals/{id}/cancel（规划）\n认证租户/作用域；持久幂等\n返回 cancellation_requested / 当前 version\n不能把 API 响应当作已取消或退款"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-gate",
+      "type": "rectangle",
+      "x": 890,
+      "y": 250,
+      "width": 660,
+      "height": 170,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "2 / PG 取消事务（规划）\n永久关闭此经济业务再次签名 gate\n保留现有 Hold / Permit / tx family 证据\n生成取消 Outbox；不删除付款历史"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-audit",
+      "type": "rectangle",
+      "x": 1730,
+      "y": 250,
+      "width": 620,
+      "height": 170,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "3 / 审计授权与请求状态（规划）\nAUTHORIZATION_POSSIBLE / SIGNING_POSSIBLE\n签名超时也按可能发生处理\n查询具体 Treasury.requestStatus(requestId)"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-before",
+      "type": "rectangle",
+      "x": 60,
+      "y": 675,
+      "width": 680,
+      "height": 235,
+      "backgroundColor": "#f3e8ff",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "从未进入任何授权可能发生状态\n事务锁定业务与签名准入\n可证明无其他已签/未确认授权\n永久拒绝排队中的签名任务\n据此终结本地业务并形成取消凭证"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-refund",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1020,
+      "width": 680,
+      "height": 215,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "安全释放用户提现 Hold（规划）\n订单 → FINAL_CANCELLED\n正常余额回可用\n仍受风险限制时转风险冻结\njournal + Outbox 同事务"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-submit",
+      "type": "rectangle",
+      "x": 880,
+      "y": 675,
+      "width": 680,
+      "height": 235,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "Guardian / Council / Timelock 提交\nTreasury.cancelWithdrawal(requestId)\n底层 cancelOperation：Unused → Cancelled\n已 Executed 则拒绝；Cancelled 可幂等重放\n付款和取消谁先在链上执行决定结果"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-cancelled",
+      "type": "rectangle",
+      "x": 880,
+      "y": 1020,
+      "width": 680,
+      "height": 215,
+      "backgroundColor": "#e3fafc",
+      "strokeColor": "#0c8599",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "最终 requestStatus = Cancelled\n规范链 OperationCancelled + 状态核对\n确认无已付款经济效果\n旧 Permit 永久不能消费此 ID\n再释放/转风险用户 Hold，发 cancelled"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-executed",
+      "type": "rectangle",
+      "x": 1700,
+      "y": 675,
+      "width": 680,
+      "height": 235,
+      "backgroundColor": "#ebfbee",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "最终 requestStatus = Executed\nWithdrawalExecuted 与订单效果一致\n取消不会逆转已执行付款\n订单仍按 FINAL_PAID 结算\n不退款、不在新 Treasury 重签同活跃订单"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-uncertain",
+      "type": "rectangle",
+      "x": 1700,
+      "y": 1020,
+      "width": 680,
+      "height": 215,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "未最终 / Unknown / Reorged / 查不到\n保持用户 Hold 和签名 gate 关闭\n恢复索引覆盖，追踪所有授权与交易族\n重播稳定取消命令并确认结果\n不能把 timeout 当作“未付款”"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-note0",
+      "type": "rectangle",
+      "x": 60,
+      "y": 1390,
+      "width": 1120,
+      "height": 300,
+      "backgroundColor": "#fff0f0",
+      "strokeColor": "#e03131",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "以下都不是安全退款证明：\n• EOA nonce 替换屏障已最终上链（内层 Permit 仍可被其他交易提交）。\n• 外层交易未广播 / RPC 不存在 / 交易 revert / Relayer 已轮换。\n• 服务器时钟超过 deadline / 仅本地写 CANCELLED。\n这些事实可能只结束一次尝试，无法证明经济业务永久不可付款。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-note1",
+      "type": "rectangle",
+      "x": 1260,
+      "y": 1390,
+      "width": 1120,
+      "height": 300,
+      "backgroundColor": "#f8f9fa",
+      "strokeColor": "#868e96",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "备选终结证明：授权过期或 epoch 已最终撤销。\n需最终链时间越过 deadline 或最终控制状态生效；\n全部可执行授权域/版本与执行记录覆盖完整，且无已付款事实。\n优先使用按 requestId 永久链上撤销作为证明。\n换 Treasury 前必须先在旧域最终终结未付款订单，去重映射不会自动迁移。"
+      },
+      "fontSize": 18,
+      "fontFamily": 2,
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-edge-0",
+      "type": "arrow",
+      "x": 768,
+      "y": 335,
+      "width": 810,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#1971c2",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "幂等请求"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          114,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-05-cancellation-api"
+      },
+      "end": {
+        "id": "20261011-05-cancellation-gate"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-edge-1",
+      "type": "arrow",
+      "x": 1558,
+      "y": 335,
+      "width": 820,
+      "height": 0,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "重新核验"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          164,
+          5.684341886080802e-14
+        ]
+      ],
+      "start": {
+        "id": "20261011-05-cancellation-gate"
+      },
+      "end": {
+        "id": "20261011-05-cancellation-audit"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-edge-2",
+      "type": "arrow",
+      "x": 400,
+      "y": 918,
+      "width": 0,
+      "height": 335,
+      "backgroundColor": "transparent",
+      "strokeColor": "#9c36b5",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "label": {
+        "text": "完整未签证明"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          94
+        ]
+      ],
+      "start": {
+        "id": "20261011-05-cancellation-before"
+      },
+      "end": {
+        "id": "20261011-05-cancellation-refund"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    },
+    {
+      "id": "20261011-05-cancellation-edge-3",
+      "type": "arrow",
+      "x": 1220,
+      "y": 918,
+      "width": 0,
+      "height": 335,
+      "backgroundColor": "transparent",
+      "strokeColor": "#2f9e44",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "取消先执行"
+      },
+      "fontSize": 16,
+      "fontFamily": 2,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          94
+        ]
+      ],
+      "start": {
+        "id": "20261011-05-cancellation-submit"
+      },
+      "end": {
+        "id": "20261011-05-cancellation-cancelled"
+      },
+      "endArrowhead": "arrow",
+      "createdAt": "2026-10-11T02:23:47.239Z",
+      "updatedAt": "2026-10-11T02:23:47.239Z",
+      "version": 1
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  }
+}

@@ -1,0 +1,76 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    proposal["明确全部案件批准范围"]
+  end
+  subgraph GUARD["Guardian / Council"]
+    direction TB
+    approve["签 DispositionPermit"]
+    release["所有适用 HOLD 已解除<br>另签释放授权"]
+  end
+  subgraph AUTH["授权 / 执行（规划）"]
+    direction TB
+    send["Relayer 调用 Controller"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    snap["读取双边 controlDigest"]
+    verify{"签名/快照/路由通过？"}
+    revert["整笔回滚"]
+    reserve["消费 ID + 搬预留"]
+    prepare["部署 Vault / 扣 lot"]
+    transfer["精确转入 Quarantine"]
+    restricted["全额 reserve + HOLD"]
+    back["preserve=false<br>只回登记 Treasury"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    final["最终处置 / 镜像过账"]
+    ledger["内部移动<br>风险负债另行复核"]
+  end
+  proposal -->|固定源/目标| snap
+  snap -->|完整快照| approve
+  approve -->|离线批准| send
+  send -->|执行处置| verify
+  verify -->|否| revert
+  verify -->|是| reserve
+  reserve -->|同一事务| prepare
+  prepare -->|同一事务| transfer
+  transfer -->|保留限制| restricted
+  restricted -.->|最终事件| final
+  release -->|明确释放| back
+  back -.->|最终事实| ledger
+  final -.->|后续独立审批| release
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class proposal app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef guard fill:#fff0f0,stroke:#e03131,color:#e03131;
+  class approve,release guard;
+  style GUARD fill:#fff0f0,stroke:#e03131,fill-opacity:0.25,stroke-width:1px
+  classDef auth fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class send auth;
+  style AUTH fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class snap,verify,revert,reserve,prepare,transfer,restricted,back evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class final,ledger book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class revert,restricted blocked;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#d9480f;
+  class verify decision;
+  linkStyle 0 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 1 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 2 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 3 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 4 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 5 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 6 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 7 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 8 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 9 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 10 stroke:#e03131,color:#e03131,stroke-width:2px;
+  linkStyle 11 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 12 stroke:#e8590c,color:#e8590c,stroke-width:2px;

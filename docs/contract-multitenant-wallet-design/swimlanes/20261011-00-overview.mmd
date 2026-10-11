@@ -1,0 +1,91 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph API["租户 / API（规划）"]
+    direction TB
+    issue["申请充值地址"]
+    address["获取已发行地址"]
+    fund["用户链上充值"]
+    withdraw["POST 提现"]
+    notice["GET 状态 / Webhook"]
+  end
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    allocate["幂等分配 + 发行门槛"]
+    authorize["归集准入"]
+    order["订单 + Hold + 审批"]
+    incident["重大风险案件"]
+  end
+  subgraph AUTH["授权 / 执行（规划）"]
+    direction TB
+    sweepSign["签归集 Permit"]
+    settleSign["观察期后签结算"]
+    paySign["签提现 / 提交交易"]
+    disposition["Council 专项处置"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    predict["Factory 预测地址"]
+    move["Deposit → Clearing"]
+    settle["Clearing → Treasury"]
+    pay["Treasury 精确付款"]
+    hold["原址 / 实际资金池 HOLD"]
+    quarantine["受限转入 Quarantine"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    observe["发现 + 最终性 + 风控"]
+    record["最终账务 + Outbox"]
+  end
+  issue -->|认证请求| allocate
+  allocate -->|预测验真| predict
+  predict -->|发行完成| address
+  address --> fund
+  fund -.->|链上事实| observe
+  observe -->|已最终 / ALLOW| authorize
+  authorize -->|批准| sweepSign
+  sweepSign -->|受控归集| move
+  move -->|lot 到期| settleSign
+  settleSign -->|结算| settle
+  withdraw -->|幂等受理| order
+  order -->|审批通过| paySign
+  paySign -->|调用提现| pay
+  pay -.->|最终事件| record
+  record -.->|最终通知| notice
+  incident -->|逐址/逐池控制| hold
+  hold -->|明确审批| disposition
+  disposition -->|原子隔离| quarantine
+  classDef api fill:#e7f5ff,stroke:#1971c2,color:#1971c2;
+  class issue,address,fund,withdraw,notice api;
+  style API fill:#e7f5ff,stroke:#1971c2,fill-opacity:0.25,stroke-width:1px
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class allocate,authorize,order,incident app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef auth fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class sweepSign,settleSign,paySign,disposition auth;
+  style AUTH fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class predict,move,settle,pay,hold,quarantine evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class observe,record book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class incident,hold,quarantine blocked;
+  linkStyle 0 stroke:#1971c2,color:#1971c2,stroke-width:2px;
+  linkStyle 1 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 2 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 3 stroke:#1971c2,color:#1971c2,stroke-width:2px;
+  linkStyle 4 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 5 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 6 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 7 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 8 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 9 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 10 stroke:#1971c2,color:#1971c2,stroke-width:2px;
+  linkStyle 11 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 12 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 13 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 14 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 15 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 16 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 17 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;

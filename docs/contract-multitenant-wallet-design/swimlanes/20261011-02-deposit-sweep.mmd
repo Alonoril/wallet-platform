@@ -1,0 +1,95 @@
+%%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph API["租户 / API（规划）"]
+    direction TB
+    send["用户向发行地址充值"]
+    pending["pending_chain"]
+    notify["GET 充值 / 余额<br>风险与确认分开"]
+  end
+  subgraph APP["后端业务（规划）"]
+    direction TB
+    risk["KYT / 风险结论"]
+    allow{"ALLOW 且覆盖完整？"}
+    balance["全余额审查 / 快照"]
+  end
+  subgraph AUTH["授权 / 执行（规划）"]
+    direction TB
+    signature["持久准入<br>签 SweepPermit"]
+    batch["Relayer 单笔 / 批次"]
+  end
+  subgraph EVM["EVM 合约（已实现）"]
+    direction TB
+    verify{"当前签名/风险通过？"}
+    revert["本项回滚 / 未执行"]
+    move["消费 ID + 懒部署<br>精确转入 Clearing"]
+    lot["recordLot + 成功事件"]
+  end
+  subgraph BOOK["索引 / 账本（规划）"]
+    direction TB
+    discover["logs / 成功 trace<br>覆盖 + 去重"]
+    final{"链最终性满足？"}
+    restricted["真实托管资产<br>先记待审查负债"]
+    hold["待审查 / 风险受限"]
+    available["转可用负债"]
+    confirm["逐项最终核验<br>operationStatus"]
+    migration["内部资产迁移过账"]
+  end
+  send -.->|链上事实| discover
+  discover --> final
+  final -->|否| pending
+  final -->|是| restricted
+  restricted -->|风险独立| risk
+  risk --> allow
+  allow -->|否| hold
+  allow -->|是| available
+  available -->|归集候选| balance
+  balance -->|全余额批准| signature
+  signature -->|Permit + 签名| batch
+  batch -->|调用归集| verify
+  verify -->|否| revert
+  verify -->|是| move
+  move -->|同事务| lot
+  lot -.->|最终事件| confirm
+  revert -.->|跟踪重试| confirm
+  confirm -->|成功项| migration
+  migration -.->|账本状态| notify
+  classDef api fill:#e7f5ff,stroke:#1971c2,color:#1971c2;
+  class send,pending,notify api;
+  style API fill:#e7f5ff,stroke:#1971c2,fill-opacity:0.25,stroke-width:1px
+  classDef app fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class risk,allow,balance app;
+  style APP fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef auth fill:#f3e8ff,stroke:#9c36b5,color:#9c36b5;
+  class signature,batch auth;
+  style AUTH fill:#f3e8ff,stroke:#9c36b5,fill-opacity:0.25,stroke-width:1px
+  classDef evm fill:#ebfbee,stroke:#2f9e44,color:#2f9e44;
+  class verify,revert,move,lot evm;
+  style EVM fill:#ebfbee,stroke:#2f9e44,fill-opacity:0.25,stroke-width:1px
+  classDef book fill:#e3fafc,stroke:#0c8599,color:#0c8599;
+  class discover,final,restricted,hold,available,confirm,migration book;
+  style BOOK fill:#e3fafc,stroke:#0c8599,fill-opacity:0.25,stroke-width:1px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a;
+  class revert blocked;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#d9480f;
+  class final,allow,verify decision;
+  classDef pending fill:#fff4e6,stroke:#e8590c,color:#e8590c;
+  class pending,hold pending;
+  linkStyle 0 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 1 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 2 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 3 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 4 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 5 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 6 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 7 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 8 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 9 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 10 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 11 stroke:#9c36b5,color:#9c36b5,stroke-width:2px;
+  linkStyle 12 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 13 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 14 stroke:#2f9e44,color:#2f9e44,stroke-width:2px;
+  linkStyle 15 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 16 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 17 stroke:#0c8599,color:#0c8599,stroke-width:2px;
+  linkStyle 18 stroke:#e8590c,color:#e8590c,stroke-width:2px;

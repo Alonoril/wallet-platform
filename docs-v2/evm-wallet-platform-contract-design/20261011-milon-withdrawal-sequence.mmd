@@ -1,0 +1,39 @@
+sequenceDiagram
+    autonumber
+    participant U as 用户 / 租户
+    participant B as Rust 后端
+    participant M as Milon 提现 App
+    participant V as 节点审批与签名服务
+    participant A as EVM 授权验证器
+    participant H as EVM 热钱包与订单簿
+    participant R as 用户收款地址
+
+    U->>B: 提交绑定资产、金额与收款人的请求
+    B->>M: RequestWithdrawal（用户授权证据）
+    M->>M: 原子预留本金与费用，生成唯一订单
+    B->>M: 建立唯一有效执行尝试，锁定 Permit
+    V->>M: VoteInit（ApproveWithdrawal 指令）
+    loop 其他审批节点独立检查后投票
+        V->>M: Vote（同一 intent）
+    end
+    B->>M: vote-gated execute：ApproveWithdrawal
+    M->>M: 校验预留、委员会版本与订单状态
+    M-->>V: 审批成功的用户块与终局证书
+    V->>V: 经各自验证节点核验已终局的 Approved 记录
+    V-->>B: 跨链证书的独立 ECDSA 签名
+    B->>H: executeWithdrawal（Permit、门限证书）
+    H->>A: 验证 Permit 摘要与跨链证书
+    A->>A: 验证来源、用途、委员会版本与去重门限
+    A-->>H: 授权有效
+    H->>H: 当前风控、额度、共享订单未消费检查
+    H->>R: 原子消费订单并转账
+    H-->>B: WithdrawalExecuted 事件
+    B->>B: 等待目标 EVM 链终局
+    V->>V: 独立核验 EVM 付款或取消终局证据
+    V->>M: 门限授权的结果回执
+    M->>M: 幂等结算预留并写入 Paid / Cancelled
+    M-->>B: 订单最终结果
+    B-->>U: 更新订单并通知
+
+    Note over B,H: 超时、广播失败或 Milon CancelRequested 均不能直接释放预留
+    Note over V,A: EVM 信任节点门限证明；一期不直接验证 Milon 原生终局证书

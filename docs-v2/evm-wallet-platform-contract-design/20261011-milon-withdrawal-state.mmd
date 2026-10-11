@@ -1,0 +1,29 @@
+stateDiagram-v2
+    direction TB
+    [*] --> Reserved: 用户授权与余额预留通过
+    state "在途订单（保留余额预留）" as InFlight {
+        direction TB
+        Reserved --> Approving: 锁定唯一执行尝试
+        Approving --> Approved: 链上多签执行成功
+        Approved --> Certified: 审批终局与桥签名达标
+        Certified --> Submitted: 提交 EVM 交易
+    }
+    Submitted --> Paid: EVM 付款终局与可信回执
+    Paid --> [*]
+
+    InFlight --> SafeReattempt: 所有旧授权不可执行且未付款
+    SafeReattempt --> Approving: 保留预留，建立新尝试并重新审批
+
+    InFlight --> CancelRequested: 请求取消
+    CancelRequested --> Paid: 付款抢先且最终确认
+    CancelRequested --> Cancelled: EVM 禁付已终局且可信回执
+    Cancelled --> [*]
+
+    note right of SafeReattempt
+        核验所有旧授权不可执行且未付款
+        新尝试沿用原 requestId
+    end note
+    note right of CancelRequested
+        保留提现预留
+        EVM 取消或授权失效证据最终确认后才释放
+    end note

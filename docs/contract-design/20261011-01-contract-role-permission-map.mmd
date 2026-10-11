@@ -1,0 +1,83 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"16px","lineColor":"#64748b","edgeLabelBackground":"#ffffff"},"flowchart":{"htmlLabels":true,"curve":"basis","nodeSpacing":38,"rankSpacing":58,"padding":14}}}%%
+flowchart TB
+  subgraph ACTORS["一、身份与签名凭据"]
+    direction LR
+    COUNCIL["Council<br/>离线多签合约 · ERC-1271"]
+    TIMELOCK["TenantTimelock<br/>Governor · 最短延迟 2 天"]
+    GUARDIAN["Guardian<br/>紧急收紧权限"]
+    EXECUTOR["Executor<br/>交易提交白名单"]
+    SIGNERS["用途签名地址（EOA 或 ERC-1271）<br/>RISK_<br/>SIGNER<br/>SETTLEMENT_<br/>SIGNER<br/>WITHDRAWAL_<br/>SIGNER<br/>TRANSFER_<br/>SIGNER"]
+  end
+
+  subgraph CONTROLS["二、治理和紧急控制进入控制平面"]
+    direction LR
+    GOVERNANCE["Governor 权限<br/>配置 signer / Executor / 资产<br/>登记池、路由、限额；延迟恢复"]
+    EMERGENCY["Guardian 快速收紧（Governor 也可执行部分入口）<br/>Guardian 仅禁用 Executor / 资产<br/>加 HOLD / 暂停 / 收紧限额 / 提高 reserve"]
+    COUNCIL_DIRECT["Council 直接权限（不经过 Timelock）<br/>逐案解除 HOLD、按版本调整 reserve<br/>管理收款方限制"]
+    CONTROL_PLANE["权限与状态合约<br/>TenantAuthority · RiskRegistry<br/>PoolRegistry"]
+    CANCEL["OperationBook 公共基类（非独立部署合约）<br/>各业务合约单独记录请求状态<br/>Guardian / Council / Governor 可取消未执行操作"]
+  end
+
+  subgraph EXECUTION["三、资金业务调用的组合门槛"]
+    direction LR
+    CALLER_GATE["调用者门<br/>onlyExecutor 提交交易"]
+    SIGNATURE_GATE["普通业务授权门<br/>按入口用途校验 EIP-712 签名与 signerEpoch"]
+    STATE_GATE["当前状态门（按入口适用）<br/>资产 / 租户 / 池 / 有效期<br/>Risk epoch / reserve；普通流出须无 HOLD<br/>专项处置可按快照受控移动 HOLD 资金<br/>SECURITY_PAUSED 不可绕过<br/>路由、codeHash、限额、精确金额与请求状态"]
+    SIGNED_ENTRIES["用途签名业务入口<br/>VaultManager.sweep · ClearingVault.settle<br/>Treasury 提现 / 调拨 · Cold 回款"]
+    DISPOSITION_ENTRY["DispositionController 专项处置<br/>Executor + Council Permit 签名<br/>不使用在线用途 signer"]
+    COAPPROVAL["Council ERC-1271 共签门<br/>仅指定入口与条件需要；签同一 Permit digest"]
+    COAPPROVAL_SET["需要 Council 共签的入口子集<br/>Clearing 迁移 · 超限提现<br/>迁移 / 超限调拨 · 所有 Cold 回款<br/>所有专项处置"]
+    DEPLOY_ENTRY["VaultManager.<br/>deployVault → VaultFactory<br/>Executor only；部署地址，不转移资金"]
+  end
+
+  COUNCIL -->|排队并执行提案| TIMELOCK
+  TIMELOCK -->|Governor only| GOVERNANCE
+  GUARDIAN -->|快速收紧| EMERGENCY
+  COUNCIL -->|受限直接治理| COUNCIL_DIRECT
+  GOVERNANCE --> CONTROL_PLANE
+  EMERGENCY --> CONTROL_PLANE
+  COUNCIL_DIRECT --> CONTROL_PLANE
+  GUARDIAN --> CANCEL
+  COUNCIL --> CANCEL
+  TIMELOCK --> CANCEL
+
+  EXECUTOR --> CALLER_GATE
+  SIGNERS -.-> SIGNATURE_GATE
+  CONTROL_PLANE -.->|配置 / 验签 / 实时读取| SIGNATURE_GATE
+  CONTROL_PLANE -.-> STATE_GATE
+  CALLER_GATE --> SIGNED_ENTRIES
+  CALLER_GATE --> DISPOSITION_ENTRY
+  CALLER_GATE --> DEPLOY_ENTRY
+  SIGNATURE_GATE --> SIGNED_ENTRIES
+  STATE_GATE --> SIGNED_ENTRIES
+  STATE_GATE --> DISPOSITION_ENTRY
+  COUNCIL -.->|逐笔签名批准| COAPPROVAL
+  COAPPROVAL --> COAPPROVAL_SET
+  COAPPROVAL_SET --> SIGNED_ENTRIES
+  COAPPROVAL_SET --> DISPOSITION_ENTRY
+  CANCEL -->|只取消未执行操作| SIGNED_ENTRIES
+  CANCEL --> DISPOSITION_ENTRY
+
+  classDef council fill:#fff1d6,stroke:#d97706,color:#713f12,stroke-width:2px;
+  classDef timelock fill:#e9edff,stroke:#4c5ed7,color:#283593,stroke-width:2px;
+  classDef guardian fill:#ffe8e8,stroke:#d53f50,color:#842029,stroke-width:2px;
+  classDef executor fill:#dff7f4,stroke:#138a80,color:#075b54,stroke-width:2px;
+  classDef signer fill:#f1eaff,stroke:#805ad5,color:#4b2e83,stroke-width:2px;
+  classDef permission fill:#e8f0ff,stroke:#3867c8,color:#173b75,stroke-width:2px;
+  classDef risk fill:#ffe6ec,stroke:#d6335c,color:#84213c,stroke-width:2px;
+  classDef gate fill:#fff7d6,stroke:#d09000,color:#67430b,stroke-width:2px;
+  classDef entry fill:#eaf6ff,stroke:#2584b8,color:#124466,stroke-width:2px;
+
+  class COUNCIL,COUNCIL_DIRECT,COAPPROVAL council;
+  class TIMELOCK,GOVERNANCE timelock;
+  class GUARDIAN,EMERGENCY guardian;
+  class EXECUTOR,CALLER_GATE executor;
+  class SIGNERS,SIGNATURE_GATE signer;
+  class CONTROL_PLANE permission;
+  class COUNCIL_DIRECT council;
+  class STATE_GATE,CANCEL gate;
+  class SIGNED_ENTRIES,DISPOSITION_ENTRY,COAPPROVAL_SET,DEPLOY_ENTRY entry;
+
+  style ACTORS fill:#f8f9ff,stroke:#8c9ce8,stroke-width:2px;
+  style CONTROLS fill:#f7fbff,stroke:#7aa6d8,stroke-width:2px;
+  style EXECUTION fill:#fffdf2,stroke:#d2ad46,stroke-width:2px;

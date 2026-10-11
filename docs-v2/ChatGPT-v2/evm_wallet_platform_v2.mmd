@@ -1,0 +1,50 @@
+flowchart TB
+  U[租户用户] --> API[Wallet API]
+  API --> DF[DepositFactory CREATE2]
+  DF --> DV[用户独立 DepositVault ACTIVE]
+  IN[链币 / ERC20 充值] --> DV
+  DV --> IDX[Indexer 记录入账与余额]
+  IDX --> BAL[未归集余额保存在 DepositVault]
+
+  BAL --> WR[用户申请提现]
+  WR --> WA[平台认证 + 单签授权 + 防重放]
+  WA --> REL[Relayer 支付 Gas]
+  REL --> W[DepositVault.withdraw]
+  W --> DEST[用户指定外部地址]
+
+  BAL --> OBS[观察期计时与自动归集风控]
+  OBS --> GO{观察期到期且允许归集?}
+  GO -->|否| WAIT[继续留存合约 / 不自动归集]
+  GO -->|是| PM[HotPoolManager]
+  PM --> LIMIT[查 chainId + tokenAddress 币种上限]
+  LIMIT --> ROOM{现有健康 HotVault 有足够容量?}
+  ROOM -->|是| SWEEP[DepositVault.sweep]
+  SWEEP --> HOT[目标 HotVault]
+  ROOM -->|否| COUNT{HotVault 数量低于 20/50?}
+  COUNT -->|是| NEW[创建新 HotVault]
+  NEW --> SWEEP
+  COUNT -->|否| OLDEST[选择最旧的健康 HotVault]
+  OLDEST --> COLD[转至离线冷钱包]
+  COLD --> LIMIT
+
+  BAL --> RISK[高风险标记 / 地址污染]
+  RISK --> STOP[停止自动归集；ACTIVE 允许用户提现]
+  STOP --> ROT[创建新的 DepositVault 版本]
+  ROT --> RET[旧 Vault RETIRED: 禁提现禁归集]
+  RET --> OLD[误转旧地址不业务入账；安全审计]
+
+  ADMIN[管理 API 修改每币种 maxBalance] --> AUTH[RBAC 权限 + 审计]
+  AUTH --> TX[提交配置合约交易]
+  TX --> EVT[链上 TokenLimitUpdated 生效]
+  EVT --> LIMIT
+
+  HOT --> POST{归集后发现风险?}
+  POST -->|是| ISOLATE[隔离受影响 HotVault 与后续资金流]
+  POST -->|否| ACTIVEHOT[继续运营]
+
+  classDef safe fill:#d9f6e4,stroke:#34a36d,color:#124e34
+  classDef warn fill:#ffedc9,stroke:#cb993c,color:#78500d
+  classDef danger fill:#ffe2e3,stroke:#d96d73,color:#792c39
+  class W,DEST,SWEEP,HOT,COLD safe
+  class OBS,GO,LIMIT,ROOM,COUNT,OLDEST,WAIT warn
+  class RISK,STOP,ROT,RET,OLD,ISOLATE danger

@@ -1,0 +1,62 @@
+flowchart TD
+  subgraph S1["① 创建与分配充值合约"]
+    U["租户用户 / Wallet API"] --> DF["DepositFactory / Registry"]
+    DF -->|"CREATE2：tenant + user + chain + version"| DV["DepositVault：独立充值合约"]
+  end
+
+  subgraph S2["② 充值审查与观察期"]
+    DV -->|"原生币 / ERC20 入账"| IDX["Indexer：链上确认 + 分笔入账"]
+    IDX --> RISK{"来源风控和地址冻结检测通过？"}
+    RISK -->|"通过"| WATCH["观察期 T：每笔充值独立计时"]
+    WATCH --> PRE{"观察期到期 / 归集前复核通过？"}
+  end
+
+  subgraph S3["③ 污染地址隔离与轮换"]
+    RISK -->|"失败"| LOCK["Quarantine：禁提现、禁归集"]
+    PRE -->|"失败"| LOCK
+    LOCK --> RETIRE["Retire 旧地址：停止业务监听与入账"]
+    RETIRE -->|"版本 +1"| DF
+    RETIRE --> OLD["旧地址仍可能被动收到转账；保留审计记录"]
+  end
+
+  subgraph S4["④ 未归集余额的用户提现"]
+    WATCH -->|"用户发起提现"| WRISK{"出金风控通过且有清洁可用余额？"}
+    WRISK -->|"通过"| WITHDRAW["DepositVault.withdraw：Relayer 支付 Gas"]
+    WITHDRAW --> EXT["用户指定外部地址"]
+    WRISK -->|"失败"| HOLD["拒绝 / 冻结本次提现"]
+  end
+
+  subgraph S5["⑤ 热钱包池动态分配"]
+    PRE -->|"通过"| PM["HotPoolManager：最多 20 / 50 个 HotVault"]
+    PM --> CAP{"有健康热钱包且剩余容量足够？"}
+    CAP -->|"有"| SWEEP["DepositVault.sweep → HotVault"]
+    CAP -->|"没有"| CNT{"现有热钱包数量小于上限？"}
+    CNT -->|"是"| NEW["部署新 HotVault"]
+    NEW --> SWEEP
+    CNT -->|"否"| OLDEST["选择最旧且风险正常的 HotVault"]
+    SWEEP --> HOT["HotVault：目标持仓上限 100,000 USD"]
+  end
+
+  subgraph S6["⑥ 冷钱包归集与容量回收"]
+    OLDEST --> CCHECK{"资产可转移且出冷风控通过？"}
+    CCHECK -->|"是"| SEND["HotVault.sweepToCold：Relayer 支付 Gas"]
+    SEND --> COLD["离线 Cold EOA：系统仅保存公开地址"]
+    SEND --> RELEASE["旧 HotVault 释放容量"]
+    RELEASE --> SWEEP
+    CCHECK -->|"否"| QUEUE["待归集队列 / 人工处置，不强制超额"]
+  end
+
+  subgraph S7["⑦ 归集后风险应急"]
+    HOT --> POST{"归集后发现关联黑钱？"}
+    POST -->|"是"| FREEZE["冻结受影响 HotVault，停止出金与转冷；链上追踪"]
+    POST -->|"否"| NORMAL["正常运营，持续风险监控"]
+    FREEZE -->|"追溯来源"| LOCK
+    COLD -.->|"事后发现污染"| COLD_RISK["冷钱包离线隔离 + 合规处置，不支持链上撤销"]
+  end
+
+  classDef danger fill:#fee2e2,stroke:#f87171,color:#991b1b;
+  classDef money fill:#d1fae5,stroke:#34d399,color:#065f46;
+  classDef hot fill:#fef3c7,stroke:#f59e0b,color:#92400e;
+  class LOCK,RETIRE,OLD,HOLD,FREEZE,COLD_RISK danger;
+  class WITHDRAW,EXT,SEND,COLD,RELEASE money;
+  class PM,CAP,CNT,OLDEST,NEW,SWEEP,HOT hot;

@@ -1,0 +1,377 @@
+{
+  "source": "src/common/WalletTypes.sol and src/common/PermitHash.sol",
+  "version": "1",
+  "domains": {
+    "SweepPermit": {
+      "name": "Milon Sweep",
+      "verifier": "VaultManager"
+    },
+    "WithdrawalPermit": {
+      "name": "Milon Treasury",
+      "verifier": "TreasuryVault"
+    },
+    "TransferPermit": {
+      "name": "Milon Treasury",
+      "verifier": "TreasuryVault",
+      "additionalDomains": [
+        { "name": "Milon Cold", "verifier": "ColdVault" }
+      ]
+    },
+    "SettlementPermit": {
+      "name": "Milon Clearing",
+      "verifier": "ClearingVault"
+    },
+    "DispositionPermit": {
+      "name": "Milon Disposition",
+      "verifier": "DispositionController"
+    }
+  },
+  "types": {
+    "SweepPermit": [
+      {
+        "name": "operationId",
+        "type": "bytes32"
+      },
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "poolId",
+        "type": "bytes32"
+      },
+      {
+        "name": "walletKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "factory",
+        "type": "address"
+      },
+      {
+        "name": "vault",
+        "type": "address"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "destination",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "name": "expectedBalance",
+        "type": "uint256"
+      },
+      {
+        "name": "riskDecisionId",
+        "type": "bytes32"
+      },
+      {
+        "name": "evidenceDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "vaultEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "vaultAssetEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "poolEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "poolAssetEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "routeEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "signerEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint256"
+      },
+      {
+        "name": "deadline",
+        "type": "uint256"
+      }
+    ],
+    "WithdrawalPermit": [
+      {
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "poolId",
+        "type": "bytes32"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "name": "approvalDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "poolEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "poolAssetEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "policyEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "signerEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint256"
+      },
+      {
+        "name": "deadline",
+        "type": "uint256"
+      }
+    ],
+    "SettlementPermit": [
+      {
+        "name": "operationId",
+        "type": "bytes32"
+      },
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "poolId",
+        "type": "bytes32"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "destination",
+        "type": "address"
+      },
+      {
+        "name": "lotsHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "evidenceDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "sourceEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "sourceAssetEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "destinationEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "destinationAssetEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "routeEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "signerEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint256"
+      },
+      {
+        "name": "deadline",
+        "type": "uint256"
+      }
+    ],
+    "TransferPermit": [
+      {
+        "name": "operationId",
+        "type": "bytes32"
+      },
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "poolId",
+        "type": "bytes32"
+      },
+      {
+        "name": "kind",
+        "type": "uint8"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "destination",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "name": "approvalDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "sourceEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "sourceAssetEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "destinationEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "destinationAssetEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "routeEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "policyEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "signerEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint256"
+      },
+      {
+        "name": "deadline",
+        "type": "uint256"
+      }
+    ],
+    "DispositionPermit": [
+      {
+        "name": "operationId",
+        "type": "bytes32"
+      },
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "poolId",
+        "type": "bytes32"
+      },
+      {
+        "name": "caseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "walletKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "source",
+        "type": "address"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "destination",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "name": "reserveToMove",
+        "type": "uint256"
+      },
+      {
+        "name": "evidenceDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "sourceControlDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "destinationControlDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "reserveVersion",
+        "type": "uint256"
+      },
+      {
+        "name": "routeEpoch",
+        "type": "uint256"
+      },
+      {
+        "name": "lotsHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "preserveRestriction",
+        "type": "bool"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint256"
+      },
+      {
+        "name": "deadline",
+        "type": "uint256"
+      }
+    ]
+  }
+}

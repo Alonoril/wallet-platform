@@ -96,11 +96,13 @@ Batch 不是资金业务键。每个 operationId 独立确认和过账；一批�
 
 ## 5. RiskRegistry、PoolRegistry 与 Clearing
 
-RiskRegistry 默认无 HOLD，但没有有效 Permit 仍不可归集。存储稀疏 HOLD，维护 vault/token 和 pool 级 epoch。设置 HOLD、撤销、解除均单调提升对应 epoch；解除不得恢复旧授权。Guardian 可立即设置 HOLD/提高 epoch，只有离线阈值批准可解除。合约直接调用和运维入口也必须经过相同检查。
+RiskRegistry 默认无 HOLD，但没有有效 Permit 仍不可归集。存储按 scope/caseId 区分的稀疏 HOLD、活跃原因计数，维护 vault/token 和 pool 级 epoch；不能只用会被单案审批覆盖的一个 bool。设置 HOLD、撤销、解除均单调提升对应 epoch；解除不得恢复旧授权。Guardian 可立即设置 HOLD/提高 epoch，只有满足该冻结原因要求的独立阈值批准可解除指定原因，其他原因继续有效。合约直接调用和运维入口也必须经过相同检查。
+
+`applyPoolAssetHold(pool, token, caseId, minimumReserve)` 同一事务添加原因、提升 epoch 并增加该案件已有预留的下限；重复命令不能重复增加金额，预留按有版本的绝对量保存。相关事件包含 controlId/caseId、scope、epoch、状态和预留。源/目标、全局/资产的所有适用作用域都被检查；完整控制模型见 [03 第 9 节](20261010-03-risk-isolation.md#9-必须落到合约的控制契约)。
 
 PoolRegistry 固定 tenantKey、风险域、普通路由和应急目的地注册。改路由需离线阈值 + 时间锁，变更前暂停，变更时 routeEpoch++；不接受在线 Manager 任意指定目标。目标须属于同租户、批准代码版本、正确池身份；“同租户”由注册表约束，不能只相信目标自报 getter。
 
-ClearingVault 只接受归集资产，不提供用户提现。每项已验证归集调用 Clearing 的受限 `recordLot(operationId, token, amount)`，与转账同一子调用提交，记录入池时间、未释放量。ERC-20 直接打入不会生成 lot。SettlementPermit 绑定确切 lotIds、各释放金额、lot 集合 hash、目标 Treasury、risk/route/signer epoch、有效期、operationId；合约检查观察期、未释放余额、池暂停和当前资金下限。一次 lot 可以分批释放，但累计不超过登记金额。未知直接入款不增加 lot 或可结算额度。
+ClearingVault 只接受归集资产，不提供用户提现。每项已验证归集调用 Clearing 的受限 `recordLot(operationId, token, amount)`，与转账同一子调用提交，记录入池时间、未释放量。ERC-20 直接打入不会生成 lot。SettlementPermit 绑定确切 lotIds、各释放金额、lot 集合 hash、来源 Clearing 和目标 Treasury 的全局/本资产 risk epochs、route/signer epoch、有效期、operationId；合约同时检查来源和目标当前 HOLD、观察期、未释放余额和资金下限。一次 lot 可以分批释放，但累计不超过登记金额。未知直接入款不增加 lot 或可结算额度。
 
 Clearing 各 lot 在同一地址混合，记录只提供数量和时间控制。发现一项严重风险时默认暂停该池/资产的所有结算，不能宣称其他 lot 对应物理干净资产。观察期按风险域配置且改短需延迟治理；建议先以 30 分钟作为压测和运营评估起点，不作为最终性或安全保证。
 
@@ -117,13 +119,15 @@ WithdrawalPermit {
 }
 ```
 
-Domain 为 `Milon Treasury/1/chainId/具体 Treasury`。Treasury 固定租户/池，维护 `requestStatus[requestId] = UNUSED/EXECUTED/CANCELLED`。不同签名版本或 Relayer 不改变 requestId；金额、资产、收款人永久绑定，经济参数变更必须结束原订单并另行受理。policyEpoch 为该 Treasury 本地出金政策的单调版本，本地暂停、解除、限制或风险底线变更均提升它；poolEpoch、poolAssetEpoch 另绑定 RiskRegistry 当前值，Registry 设置或解除 HOLD 均提升对应版本。执行时所有版本必须匹配并实时检查 HOLD，保证恢复后旧授权不会重新有效。
+Domain 为 `Milon Treasury/1/chainId/具体 Treasury`。Treasury 固定租户/池，提供 `requestStatus(requestId) = UNUSED/EXECUTED/CANCELLED`，底层操作状态在本合约永久保存。不同签名版本或 Relayer 不改变 requestId；平台必须永久绑定金额、资产、收款人，经济参数变更须结束原订单并另行受理。C1.2 实现的 policyEpoch 是本租户/链 PoolRegistry 的共享出金政策版本，限额、安全底线和收款限制变更均提升它；poolEpoch、poolAssetEpoch 另绑定 RiskRegistry 当前值，Registry 设置或解除 HOLD/安全暂停均提升对应版本。执行时所有版本必须匹配并实时检查 HOLD，保证恢复后旧授权不会重新有效。实际字段和 domain 以 [06](20261010-06-solidity-implementation.md) 及源代码为准。
 
 executeWithdrawal 校验当前签名集合、epoch、时间、requestId 未使用、资产/池未暂停、收款人规则、金额以及原生/ERC-20 余额；先记录 EXECUTED、扣额度，再转账验证效果，最后发事件。转账失败整项回滚，原授权仍可能再用。拒绝 to 为零、Treasury 自身或本租户已登记内部托管地址；内部调拨走专门入口。
 
 链上设置每资产单笔上限、UTC 日累计上限及滚动窗口上限，防止日边界双倍突发。限额计数覆盖提现和普通对外流出，跨池迁移不得重置风险域总预算；上线一期禁止活跃提现跨 Treasury 换池。额度提高、窗口缩短和角色扩权须时间锁；Guardian 可降低/暂停。高额提现要求在线授权与独立离线签名共同满足，不能把两把同机在线密钥当成独立审批。
 
-所有流出检查 `balanceAfter >= restrictedReserve + safetyFloor`；restrictedReserve 为受治理约束的链上风险/未知入款保留额，Guardian 可增加，减少须有案件/对账批准。链下另外扣除在途物理预留。直接打入的陌生资产在发现到链上预留生效之前存在窗口，因此上限不能仅依赖这一余额检查。
+所有普通流出检查 `balanceAfter >= restrictedReserve + safetyFloor`；restrictedReserve 为受治理约束的链上风险/未知入款保留额，Guardian 可增加，减少须有案件/对账批准。特殊处置只能消费签名明确覆盖的预留分配，剩余资产仍覆盖全部其他预留和缓冲，不能套用无条件减预留。链下另外扣除在途物理预留。直接打入的陌生资产在发现到链上预留生效之前存在窗口，因此上限不能仅依赖这一余额检查。
+
+提现、转冷、资产恢复、治理迁移等全部普通资产流出使用同一 Registry 检查与限额/资金底线，不给高权限角色保留绕过风险 HOLD 的迁移入口。不得存在 token approve 或通用调用旁路。
 
 一期提现逐笔执行；批量提现作为后续优化，启用前复用逐项 requestId、授权、额度、失败隔离和恢复验收，不能仅复用归集循环。
 
@@ -131,7 +135,7 @@ executeWithdrawal 校验当前签名集合、epoch、时间、requestId 未使�
 
 `cancelWithdrawal(requestId)` 由限定 CancelController/Guardian 调用，将 UNUSED 变为 CANCELLED；若已 EXECUTED 则拒绝撤销并按成功处理。Manager 对归集 operationId 提供对应永久撤销标记，取消与 consumed 互斥；取消入口在普通暂停时仍可调用。合约检查和付款在链上顺序执行，以最终规范链结果为准。普通 permit 的 deadline、链上 cancellation、epoch 撤销都不能仅靠本地数据库标记代替。
 
-DispositionController 是固定窄接口，仅执行 `caseId + source + token + amount + destination + evidenceDigest + scopeEpoch + deadline + operationId` 的离线阈值授权。普通 HOLD 可在该明确法律处置入口下例外移动，但不得绕过 `SECURITY_PAUSED`、资产余额校验、一次性操作和目的地注册；安全暂停的恢复须独立治理流程。默认目的地为同租户 Quarantine，退款/外部指令需逐案登记，禁止通用 call 或 approve。未部署地址也可受控部署后执行处置；Factory 部署不等于解除 HOLD。
+DispositionController 是固定窄接口，仅执行 `caseId + source + token + amount + destination + evidenceDigest + holdSetDigest + scopeEpochs + reserveAllocationsDigest + deadline + operationId` 的离线阈值授权。所有被例外处理的当前 HOLD 和预留分配都须在签名内明确绑定并取得相应批准；单案件处置不能绕过另一案件的冻结。普通 HOLD 可在该明确处置入口下例外移动，但不得绕过 `SECURITY_PAUSED`、其他未获批准预留、资产余额校验、一次性操作和目的地注册；安全暂停的恢复须独立治理流程。默认目的地为同租户 Quarantine，退款/外部指令需逐案登记，禁止通用 call 或 approve。未部署地址也可受控部署后执行处置；Factory 部署不等于解除 HOLD。转隔离池时目标控制、预留位置调整、精确转账在同一链上事务提交；Quarantine 不开放普通支付。
 
 不可变 Manager 缺陷可能阻断归集，预先审计的 DispositionController 路径可以从旧 Vault 向登记恢复池迁移，随后为用户发行新地址。它必须独立校验 RiskRegistry 并在明确案件规则下处理 HOLD，不能成为在线紧急提币后门。若 Vault 实现本身两条路径都损坏，或 token 冻结，不能承诺可恢复。若路由 Registry 缺陷造成两条路径共同失效，同样可能永久锁定；必须作为共享依赖重点审计。
 

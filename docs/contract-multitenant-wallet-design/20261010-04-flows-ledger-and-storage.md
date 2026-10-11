@@ -99,6 +99,8 @@ Relayer 外层 `to` 固定为 Treasury，native 提现的外层 `value=0`，付�
 | contract_addresses | tenant/user/walletKey/orderId?、chain、factory、salt、initCodeHash、address、pool、version、发行/部署状态、出生高度；唯一(chain,address)、唯一(chain,factory,salt) |
 | address_bindings | 永久用户/订单归属、历史版本；长期模式的 current 有条件唯一键，订单模式唯一(tenant,chain,orderId) |
 | contract_controls | scope、desired/observed 状态、各 epoch、控制 tx、finality；observed 不被本地请求直接覆盖 |
+| risk_control_commands | controlId、caseId、scope、payloadHash、expectedVersion、job、链上控制效果；同键不同载荷拒绝，逐 scope 跟踪最终状态 |
+| risk_hold_reasons | scope、caseId、reasonCode、active、解除批准；唯一(scope,caseId)，单案解除不清除其他原因 |
 | deposit_risk_assessments | deposit、provider/version、decision、证据、有效期、扫描 checkpoint；历史追加 |
 | risk_cases / case_events | 作用域、责任人、批准 hash、状态、追加事件；跨租户案件以显式多个子案件连接 |
 | authorizations | operation/requestId、kind、domain、payloadHash、cipherRef、signingState、epochs、deadline、链上消费证明 |
@@ -107,11 +109,14 @@ Relayer 外层 `to` 固定为 Treasury，native 提现的外层 `value=0`，付�
 | clearing_lots | operationId、asset、amount、released、maturity、risk version；released≤amount |
 | custody_movements / movement_links | 实际链上移动、唯一经济效果键、来源事件/分摊量、上下游、确认与冲正 cycle |
 | pool_reservations | 资金/风险/未知入款/费用预留、引用、状态、快照水位；不同集合不得重复扣减 |
+| risk_exposures / reserve_allocations | rootExposureId、原入款、caseId、义务量、可控量、缺口、pool、分配/交叠、版本；重复告警归并，有版本的绝对量更新，不能以重试累加 |
 | incidents / dispositions | 受影响池、资产敞口、处置目的、批准、链上结果 |
 
 全局唯一需求不能被按日期分区稀释；必要时使用独立不分区 registry 保存地址、订单、业务效果唯一键。组合外键 `(tenant_id,pool_id)`、`(tenant_id,user_id)` 防止误绑；应用授权再加 PG RLS 纵深防御。新增 `RISK_PENDING` 是负债科目；原业务 BUSINESS、RISK、WITHDRAWAL Hold 保留，并用 reason 区分法律/风控，不把 SETTLED 当余额科目。
 
 过账事务统一锁序：作用域控制 → 业务聚合 → 按 ID 排序账户 → 额度/预留；唯一 post_journal 校验借贷、租户、资产和非负限制。RPC、KYT、签名、fsync 在短事务外执行，返回后 CAS 版本重校验。关联状态、账务与 Outbox 同事务提交。
+
+重大入款风险在同一事务记录案件、关闭相关签名 gate、写控制期望状态/预留及紧急 Outbox，再异步提交链上 HOLD。冻结状态细分本地关闭、已广播、已包含、最终生效；重新分类涉及已签提现时保留原提现 Hold，先追踪撤销/付款，只有最终未付款后才转换为风险 Hold。详见 [03](20261010-03-risk-isolation.md)。
 
 ## 6. API 与异步通知
 

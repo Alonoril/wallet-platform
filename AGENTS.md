@@ -2,11 +2,11 @@
 
 ## 项目结构与模块组织
 
-当前仓库以设计文档为主，`docs/` 存放架构方案；目前没有应用源码、测试目录或 Rust workspace。文档请使用清晰的主题名和日期前缀，例如 `docs/20261009-v1-multi-wallet-design.md`。架构方案中的目标技术栈为 Rust、PostgreSQL 和 EVM 链，实际模块布局应随代码落地更新。
+`docs/` 存放架构方案，`contracts/` 存放 EVM Solidity 合约、Foundry 配置、部署脚本和测试；目前尚无 Rust workspace。文档请使用清晰的主题名和日期前缀，例如 `docs/20261009-v1-multi-wallet-design.md`。后端目标技术栈为 Rust、PostgreSQL，实际模块布局应随代码落地更新。
 
 ## 构建、测试与本地开发
 
-当前没有可运行的构建、测试或启动命令。编辑文档后请检查 Markdown 标题、代码块和相对链接，并在预览中确认 Mermaid 等图表可读。Rust workspace 建立后，使用 `cargo fmt --all -- --check` 检查格式，`cargo clippy --workspace --all-targets -- -D warnings` 执行静态检查，`cargo test --workspace` 运行测试。
+合约依赖用 `bash contracts/scripts/bootstrap.sh` 按固定 commit 安装；从仓库根目录运行 `forge build --root contracts`、`forge fmt --root contracts --check`、`forge test --root contracts`。部署和治理流程见 `contracts/README.md`。编辑文档后请检查 Markdown 标题、代码块和相对链接，并在预览中确认 Mermaid 等图表可读。Rust workspace 建立后，使用 `cargo fmt --all -- --check` 检查格式，`cargo clippy --workspace --all-targets -- -D warnings` 执行静态检查，`cargo test --workspace` 运行测试。
 
 ## 编码风格与命名
 
@@ -14,7 +14,7 @@ Rust 代码遵循 Rust 2024 和仓库 `rustfmt.toml`：缩进使用制表符，�
 
 ## 测试指南
 
-当前未配置测试框架或覆盖率门槛。新增 Rust 功能时，为业务逻辑添加单元测试，并在 `tests/` 覆盖跨模块行为；测试名称应描述场景和预期结果。涉及账本、充值、提现、幂等或租户隔离的改动，应覆盖重复请求、失败恢复及边界条件。
+Solidity 使用 Foundry 单元、fuzz 和 invariant，测试位于 `contracts/test/`，合成密钥和 mock 不用于真实部署；当前未设置覆盖率门槛。新增 Rust 功能时，为业务逻辑添加单元测试，并在 `tests/` 覆盖跨模块行为；测试名称应描述场景和预期结果。涉及账本、充值、提现、幂等或租户隔离的改动，应覆盖重复请求、失败恢复及边界条件。
 
 ## 提交与 Pull Request
 

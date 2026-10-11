@@ -1,0 +1,8 @@
+# Reproduction baseline used for this implementation; changes require a separate artifact review.
+solidity = "0.8.28"
+evm = "cancun"
+optimizer_runs = 200
+via_ir = true
+bytecode_hash = "none"
+foundry_version = "0.2.0"
+foundry_commit = "98ab45e"

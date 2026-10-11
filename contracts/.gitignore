@@ -1,0 +1,7 @@
+/lib/
+/out/
+/cache/
+/broadcast/
+.env
+*.local.json
+*.local.env

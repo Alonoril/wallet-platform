@@ -2,13 +2,15 @@
 
 日期：2026-10-11。合约基准：`23b031f`。后端 API、签名任务、索引和账本为接入设计，尚未实现。
 
-[打开可缩放图册](index.html) · [流程与 API 说明](../20261011-07-evm-flowcharts-and-api.md) · [全部 12 图可编辑画布](20261011-evm-wallet-all-flows.excalidraw) · [原方块图](../flows/README.md)
+[打开可缩放图册](index.html) · [流程与 API 说明](../20261011-07-evm-flowcharts-and-api.md) · [全部 13 图可编辑画布](20261011-evm-wallet-all-flows.excalidraw) · [原方块图](../flows/README.md)
 
 ## 阅读方法
 
 纵向按阶段推进；泳道表示责任方。蓝色为 API，紫色为后端与签名，绿色为合约，青色为索引/账本，红色为风险控制，橙色为判断或待确认。节点只写短动作；精确参数、边界条件和失败恢复写在图外。
 
 每张图均由 Mermaid flowchart 经 Excalidraw MCP 转换，并重排为固定职责泳道。Mermaid 源码与 SVG 的节点、判断、边保持一致；各 Mermaid 渲染器对子图的自动布局可能不同。固定列的阅读效果以 SVG 和 Excalidraw 为准。
+
+图 12 聚焦合约功能，颜色按合约职责划分：蓝色治理与公共执行、青色充值归集、紫色清算、绿色冷热池、红色风险登记、玫红专项隔离。图外参数与实际调用顺序见 [08 合约功能详图说明](../20261011-08-evm-contract-functions.md)。
 
 ## 图目录
 
@@ -26,6 +28,7 @@
 | [09 · 转冷与每笔离线批准回款](20261011-09-cold-custody.svg) | Treasury.transferCustody(kind=Rebalance) 高于阈值另需 Council；Cold.returnToTreasury 任何金额都必须 TRANSFER_SIGNER+Council。 | [Mermaid](20261011-09-cold-custody.mmd) · [Excalidraw](20261011-09-cold-custody.excalidraw) |
 | [10 · 部署激活、时间锁与版本迁移](20261011-10-governance.svg) | DeployTenant 固定 11 笔 CREATE；manifest planned 需真实链核验。PrepareActivation 生成 16+token数 项提案，不广播。 | [Mermaid](20261011-10-governance.mmd) · [Excalidraw](20261011-10-governance.excalidraw) |
 | [11 · 最终链事件、账本通知与恢复](20261011-11-events-recovery.svg) | 事件至少包含 SweepExecuted、LotRecorded/LotReleased、SettlementExecuted、WithdrawalExecuted、DispositionExecuted、控制/预留事件；交叉核验 operationStatus/requestStatus。 | [Mermaid](20261011-11-events-recovery.mmd) · [Excalidraw](20261011-11-events-recovery.excalidraw) |
+| [12 · EVM 合约详细功能与资金控制](20261011-12-evm-contract-functions.svg) | 六条合约泳道：治理、充值归集、清算、冷热池、风险、专项隔离；链外只保留一个触发节点。 | [Mermaid](20261011-12-evm-contract-functions.mmd) · [Excalidraw](20261011-12-evm-contract-functions.excalidraw) · [完整说明](../20261011-08-evm-contract-functions.md) |
 
 ## 00 · EVM 钱包业务全景
 
@@ -1256,3 +1259,11 @@ flowchart LR
 ```
 
 </details>
+
+## 12 · EVM 合约详细功能与资金控制
+
+![EVM 合约详细功能泳道图](20261011-12-evm-contract-functions.svg)
+
+本图包含六条合约泳道、96 个业务节点与 104 条连接。重点覆盖当前 Solidity 的权限、授权、真实资金路径、lot、共享限额、归集前后风险控制，以及案件隔离和受控释放。
+
+[完整功能说明与 Mermaid 渲染](../20261011-08-evm-contract-functions.md) · [Mermaid 源码](20261011-12-evm-contract-functions.mmd) · [可编辑画布](20261011-12-evm-contract-functions.excalidraw)

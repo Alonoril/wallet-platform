@@ -27,6 +27,7 @@
 | [05 工程、运维与验收](20261010-05-delivery-and-operations.md) | Rust 工程、成本模型、上线门槛、迁移、故障恢复 |
 | [06 合约实现与验收记录](20261010-06-solidity-implementation.md) | 已落地模块、签名/控制协议、部署激活、本地验证和生产待办 |
 | [07 流程图与 API 接入](20261011-07-evm-flowcharts-and-api.md) | 彩色泳道、API/合约映射、归集前后风险控制、取消与最终过账 |
+| [08 EVM 合约详细功能图](20261011-08-evm-contract-functions.md) | 仅聚焦合约：固定充值地址、逐项归集、lot 结算、冷热池、签名与限额、案件控制和隔离释放 |
 
 [打开彩色流程图册](swimlanes/index.html) · [Mermaid 源码与预览](swimlanes/README.md) · [保留的原方块图](flows/README.md)。
 

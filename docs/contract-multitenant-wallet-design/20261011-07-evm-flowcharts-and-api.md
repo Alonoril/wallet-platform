@@ -6,8 +6,9 @@
 
 ## 1. 图册入口
 
-- [彩色可缩放图册](swimlanes/index.html)：12 张泳道图与 10 张原方块图，支持切换、缩放、查看图外重点及 Mermaid 源码。
+- [彩色可缩放图册](swimlanes/index.html)：13 张泳道图（含合约功能详图）与 10 张原方块图，支持切换、缩放、查看图外重点及 Mermaid 源码。
 - [Mermaid 泳道图合集](swimlanes/README.md)：每张图的彩色预览、源码和详细说明。
+- [EVM 合约详细功能图](20261011-08-evm-contract-functions.md)：单张合约泳道，集中展开重要 Solidity 实现，链外仅保留调用触发说明。
 - [全部 12 图的可编辑 Excalidraw 画布](swimlanes/20261011-evm-wallet-all-flows.excalidraw)。
 - [原方块图目录](flows/README.md)：保留原 SVG 和 MCP 原始场景；另提供包含绑定文字的标准 Excalidraw 文件。
 

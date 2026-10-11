@@ -1,0 +1,465 @@
+# EVM 合约详细功能泳道图
+
+日期：2026-10-11。合约代码基准：`23b031f`。图按当前 [contracts/src](../../contracts/src/) 的入口、内部校验和状态变化绘制。
+
+本图集中展示合约职责：确定性充值地址、授权归集、清算 lot、热池支付、冷池回款、案件风险控制和隔离处置。链外仅用一个节点表示授权与控制命令的提交，不展开 API、账本或通知流程。
+
+[打开可缩放图册](swimlanes/index.html#new/20261011-12-evm-contract-functions) · [独立 SVG](swimlanes/20261011-12-evm-contract-functions.svg) · [Mermaid 源码](swimlanes/20261011-12-evm-contract-functions.mmd) · [可编辑 Excalidraw](swimlanes/20261011-12-evm-contract-functions.excalidraw)
+
+## 1. 单张合约功能图
+
+![EVM 合约详细功能：治理、充值归集、清算、冷热池、风险和专项隔离](swimlanes/20261011-12-evm-contract-functions.svg)
+
+横向看合约职责，纵向读各入口的内部执行阶段。绿色箭头表示资产移动；点线表示控制引用、公共规则复用或另一次授权调用。清算、提现、冷池回款和处置都需要各自调用，不因上一阶段成功而自动执行。
+
+图采用六条固定泳道。Mermaid 不同渲染器对子图的布局处理不同，固定泳道预览以 SVG 和 Excalidraw 为准；二者与源码使用相同的业务节点、判断和连接。
+
+| 泳道 | 合约与主要入口 | 图中重点 |
+|---|---|---|
+| 蓝：治理与公共执行 | `TenantTimelock`、`TenantAuthority`、`PoolRegistry`，以及 `OperationBook`、`PermitHash`、`ExactTransfer` | 延迟治理、租户绑定、签名用途、版本撤销、一次性 ID、共享限额、精确转账和事务回滚 |
+| 青：充值地址与归集 | `VaultFactory.predictVault/deployVault`、`DepositVault.initialize/sweep`、`VaultManager.deployVault/sweep/batchDeployAndSweep` | 固定 Clone、预充值、同事务初始化、全余额授权、逐项 gas 隔离 |
+| 紫：观察期清算 | `ClearingVault.recordLot/settle/importLots` | 余额覆盖 outstanding、lot 到期、部分释放、防重复、迁移继承 maturity |
+| 绿：热池与冷池 | `TreasuryVault.executeWithdrawal/transferCustody/cancelWithdrawal`、`ColdVault.returnToTreasury` | 收款限制、在线与 Council 共签、预留底线、共享预算、取消与付款竞争 |
+| 红：风险范围与预留 | `RiskRegistry.addHold/applyPoolAssetHold/setReserve/releaseHold/setSecurityPause` | 归集前后不同控制地址、逐案 HOLD、绝对预留与 CAS、安全暂停、完整控制快照 |
+| 玫红：专项隔离与释放 | `DispositionController.executeDisposition`、`RiskRegistry.relocateReserve`、源 Vault 的 `dispose`、`QuarantineVault` | Council 快照批准、预留迁移、Clearing lot 退休、隔离全额受限、释放仅回 Treasury |
+
+## 2. 权限、签名与公共执行边界
+
+一套合约绑定同一 `TenantAuthority`、`tenantKey`、`PoolRegistry` 和 `poolId`。池登记核对实际 getter 的租户、池及合约互绑，并记录实际 `codehash`；资金路由执行时再核对源和目的地代码哈希。审计过哪些代码由治理配置决定，登记函数不会自行审计合约。
+
+`TenantTimelock` 的延迟至少两天，后续 `updateDelay` 也不能降到该下限以下。Guardian 可禁用 Executor、禁用资产、暂停路由、收紧限额；恢复执行者、资产、路由和放宽限额经 Timelock。`releaseHold` 由 Council 逐案执行；预留减少允许 Council 或 Timelock。禁止收款人的解除也允许 Council 或 Timelock，不能用“所有恢复都需要时间锁”概括这些入口。
+
+| 资金入口 | EIP-712 Domain name / version | 在线用途与离线批准 |
+|---|---|---|
+| `VaultManager.sweep` | `Milon Sweep` / `1` | `RISK_SIGNER` |
+| `ClearingVault.settle` | `Milon Clearing` / `1` | `SETTLEMENT_SIGNER`；迁移到另一 Clearing 另需 Council |
+| `TreasuryVault.executeWithdrawal` | `Milon Treasury` / `1` | `WITHDRAWAL_SIGNER`；`amount > councilThreshold` 另需 Council |
+| `TreasuryVault.transferCustody` | `Milon Treasury` / `1` | `TRANSFER_SIGNER`；每笔迁移及高额调拨另需 Council |
+| `ColdVault.returnToTreasury` | `Milon Cold` / `1` | 所有金额都需要 `TRANSFER_SIGNER + Council` |
+| `DispositionController.executeDisposition` | `Milon Disposition` / `1` | Council 独立批准，不使用在线风险签名替代 |
+
+Domain 绑定当前 `chainId` 和实际校验合约；Permit 绑定租户、池、资产、金额、目的地和对应证据。在线签名通过 `SignatureChecker` 支持 EOA 或 ERC-1271；Council 按独立 ERC-1271 多签验证。授权必须处于 `validAfter..deadline` 内，区间长度不能超过一小时。不同入口按实际字段核对 signer、risk、route、policy 版本；处置另用双端完整 `controlDigest` 和源案件 `reserveVersion`。
+
+`OperationBook` 在具体合约内永久记录 `Unused / Executed / Cancelled`。Treasury 的提现 `requestId` 和托管移动 `operationId` **共用同一个** `operationStatus` 命名空间；跨合约 ID 不构成全局经济业务去重。取消入口校验 Guardian、Council 或 Timelock，普通暂停时仍可使用；已经 Executed 的请求拒绝取消，Cancelled 请求拒绝后续执行。
+
+资金执行入口使用 `onlyExecutor` 和 `nonReentrant`。`ExactTransfer.send` 对原生币使用空 calldata 的 Native call，对 ERC-20 使用 SafeERC20，并要求源余额准确减少 amount、目标余额准确增加 amount。状态消费、限额计数、预留、lot 变化、转账和成功事件均在同一事务；任一步失败，当前调用的全部变化回滚。合约无通用任意 call、approve、rescue、销毁或升级入口。
+
+## 3. 充值地址、归集与批量失败
+
+`VaultFactory` 的 salt 为 `keccak256(abi.encode(ADDRESS_DOMAIN_V1, deploymentChainId, tenantKey, walletKey, vaultVersion))`。预测地址由固定实现、salt 和 Factory 地址共同决定；walletKey 必须非零，当前 chainId 必须等于部署 chainId。标准 ERC-1167 实现自身锁定初始化，Clone 在创建事务内由 Factory 初始化；已有地址重用前核对代码存在、登记状态、预测地址和初始化状态。
+
+未部署地址可先收款。Factory 只接受 Manager 或 Controller 的部署调用；Manager 的独立 `deployVault` 只部署，不转账，也不修改已有风险控制。第三方 ERC-20 转入不会调用 Vault 的风控逻辑，HOLD 不能阻止第三方向地址入金。
+
+单笔归集的实际顺序为：时间与资产校验 → Permit 绑定与风险签名 → 双端 risk epoch / 开放状态 / 路由 → 实际全余额 → `_consume` → Factory 懒部署 → `DepositVault.sweep` 二次检查 → 精确转账 → Clearing 目标 `recordLot` → `SweepExecuted`。必须满足 `amount == expectedBalance == 实际余额`；签后新增粉尘也会失败，不能自动扩大签名金额。Sweep 目标可按登记路由为 Clearing 或 Treasury。
+
+批次最多 50 项。所有项目在产生效果前检查数组长度、重复 operationId、单项 gasCap 100000～2000000、单签名长度不超过 4096 字节，以及总 calldata 不超过 131072 字节。每项通过 Manager 自调用 `executeSweepItem` 复用 `_sweep`；`BoundedCall` 最多复制 256 字节返回数据，并记录其摘要。
+
+单项失败产生 `ItemFailed`，仅该项回滚；可保留其他成功项。下一项 gas 不足产生 `BatchStopped(firstUnexecuted)`，余下项未执行。外层最终回滚或 OOG 时整批仍回滚。结果须逐项核对 `SweepExecuted` 与 `operationStatus`，不能把外层交易成功当作全部项目成功。
+
+## 4. 清算、支付、调拨与回冷
+
+`recordLot` 只由 Manager 调用；lot 唯一且非零，新增 `outstanding` 必须有当前余额覆盖，maturity 为入池时间加固定 observationWindow。普通 `settle` 签名绑定 `keccak256(abi.encode(lotIds, amounts))`，数组 1～50 项、同资产、无重复且每项不超过未释放量；必须到期。部分释放增加 `released`、减少 `outstanding`，不能再次释放同一份金额。
+
+目的地为另一登记 Clearing 时执行 Migration：额外核对 Council 签名，允许移动未成熟 lot，但目标 `importLots` 继承原 maturity，并以源池、operationId、旧 lotId 生成新 lotId。迁移接收端再次检查路由、双端开放状态和余额覆盖，不因迁移缩短观察期。普通结算目标为登记 Treasury。
+
+Treasury 外部提现检查零地址、本池、内部已部署 Vault/登记池/Factory 和禁止收款名单；当前链上 `isInternal` 无法枚举尚未部署的所有预测地址。源资产必须开放，并满足 `balance - amount >= totalReserve + safetyFloor`。提现本身不要求内部 route，因此 `routesPaused` 不会暂停直接外部提现；需要控制提现时应使用相应池、资产或全资产的 RiskRegistry 控制。
+
+`transferCustody` 仅允许 Rebalance 或 Migration。Rebalance 可走 Treasury→Cold、Treasury→Treasury；Migration 走同类登记 Treasury。冷池 `returnToTreasury` 仅走 Rebalance 回登记 Treasury，所有金额都需要在线和 Council 共签，并保留源 Cold 的总预留。普通提现、托管移动、迁移和冷池回款共用 PoolRegistry 的单笔、UTC 日及保守最近 25 个小时桶预算；新 Treasury 不会重置预算。专项处置不消费这份普通支付预算。
+
+## 5. 归集前后风险与专项处置
+
+| 资金位置 | 合约控制方式 | 不可省略的约束 |
+|---|---|---|
+| 尚在预测或已部署 Vault | Guardian 对该地址 `addHold`；无代码也可登记 | 普通归集检查源与目标全资产/单资产 scope；部署不清除 HOLD；冻结和解除均提升 epoch，旧签名不会恢复 |
+| 已在 Clearing / Treasury / Cold | Guardian 对每个实际持有池 `applyPoolAssetHold` | 同事务建立 HOLD 与最低案件预留；原 Vault 的冻结不会自动影响下游池；所有普通出口实时检查 |
+| 部分资产已外付 | 控制仍可持有的资产，链上按当前余额与预留阻断流出 | 没有任意外部地址的撤回入口；预留大于余额时不会自动调低预留 |
+
+`token=address(0)` 表示原生币单资产；`allAssets=true` 是独立的全资产 scope。每案独立 HOLD，scope 维护 epoch、count 和 holdDigest。`setReserve` 写入**绝对量**并校验 CAS version，同一金额不重复累计；不同案件预留相加。解除一个 HOLD 不解除其他案件，也不自动释放预留。Guardian 只能提高预留；Council 或 Timelock 可调整减少。安全暂停只由 Guardian/Timelock 设置，只由 Timelock 解除。
+
+专项处置的实际顺序为：时间、白名单、租户/池/案件/证据、当前 routeEpoch 和双端 controlDigest → Council 签名 → 源地址绑定及目标类型 → Disposition 路由 → Controller `_consume` → `relocateReserve` → 必要时部署源 Vault → Clearing lot 校验/退休 → 源 `dispose` 的剩余预留与安全底线校验 → 精确转账 → `DispositionExecuted`。
+
+`controlDigest` 包含全资产和单资产 scope 的 epoch、HOLD 数量/摘要、安全暂停及 totalReserve。Council 必须审核其中全部有效案件；单个 caseId 不代表其他案件已批准例外。任一快照变化使旧处置签名失效。处置可按批准例外移动 HOLD 资金，但双端 SECURITY_PAUSED 始终阻断。
+
+| Clearing 来源 | Controller 处理 | 防止重复或侵占 |
+|---|---|---|
+| 有登记 lot | 核对 lotsHash；`prepareDisposition` 的退休总量必须等于 permit.amount | 可退休未成熟 lot，但 released/outstanding 同步更新，不能再普通结算 |
+| 无登记 lot 的直接转入 | lotsHash 为零、两数组为空；`assertUnattributedDisposition` | 只能使用 `balance - outstanding`，不能消耗已登记 lot |
+| 非 Clearing 来源 | lotIds、amounts 必须为空且 lotsHash 为零 | 不接受无意义的 lot 参数 |
+
+`reserveToMove` 不得超过 amount 或源案件预留，源预留更新校验 reserveVersion；其他案件预留留在源地址。`preserveRestriction=true` 只允许转同套登记 Quarantine，并对**全部转入 amount**建立目标案件预留和 HOLD，而不仅是 reserveToMove。源 `dispose` 再次要求剩余余额覆盖其他/剩余案件预留；Treasury 来源还保留 safetyFloor。预留、lot 和转账原子提交。
+
+`preserveRestriction=false` 只允许 Quarantine→Treasury，且源、目标的全部 HOLD 和安全暂停已解除。Quarantine 没有普通支付、结算或回冷入口；受控释放通过新一笔 Controller 授权。释放回 Treasury 是保管位置变化，之后的外部付款仍须 Treasury 的独立提现授权。
+
+## 6. Mermaid flowchart 源码
+
+<details>
+<summary>展开单张合约泳道图的 Mermaid 源码与渲染</summary>
+
+```mermaid
+%%{init: {"theme":"base","flowchart":{"curve":"linear","nodeSpacing":40,"rankSpacing":65},"themeVariables":{"fontFamily":"Arial, sans-serif","fontSize":"20px","lineColor":"#1864ab","edgeLabelBackground":"#ffffff"}}}%%
+flowchart LR
+  subgraph G["治理与公共执行<br/>Timelock / Authority / PoolRegistry"]
+    direction TB
+    external["链外仅提交授权 / 控制命令<br/>Relayer · Guardian · Council"]
+    timelock["Council → schedule / execute<br/>TenantTimelock 延迟 ≥ 2 天"]
+    authority["TenantAuthority<br/>签名者 / Executor / 资产白名单"]
+    register["registerPool<br/>核对租户 / poolId / 互绑；保存代码哈希"]
+    routes["暂停后 setRoute；延迟恢复<br/>routeEpoch 变化撤销旧授权"]
+    emergency["Guardian：禁用执行者 / 资产、收紧额度<br/>执行者 / 资产 / 路由恢复 → Timelock"]
+    fixedCode["固定实现与租户绑定<br/>无升级 / 任意 call / approve / rescue"]
+    signature["EIP-712 + PermitHash<br/>chainId / 当前校验合约 / tenant / pool"]
+    signers["4 类在线签名者分别验证<br/>EOA / ERC-1271；Council 独立共签"]
+    permit["资金执行：onlyExecutor + nonReentrant<br/>资产白名单；有效区间 ≤ 1 小时"]
+    epochs["按入口核对当前 epoch<br/>signer / risk / route / policy"]
+    operation["OperationBook._consume<br/>本合约 ID：Unused → Executed"]
+    exact["ExactTransfer.send<br/>Native call / ERC20 SafeERC20<br/>源减 amount，目标加 amount"]
+    atomic["状态、额度、转账、事件同事务<br/>任一失败：本次调用全部回滚"]
+    quota["PoolRegistry.consumeLimit<br/>单笔 / UTC 日 / 最近 25 小时桶<br/>全部 Treasury 与 Cold 共享预算"]
+    policy["setLimits / tightenLimits<br/>收款名单与政策变更 → policyEpoch"]
+    cancel["OperationBook.cancelOperation<br/>Guardian / Council / Timelock<br/>暂停时仍可取消；已执行拒绝"]
+  end
+  subgraph D["充值地址与授权归集<br/>Factory / DepositVault / VaultManager"]
+    direction TB
+    predict["VaultFactory.predictVault(walletKey)<br/>CREATE2：chain / tenant / walletKey<br/>固定 Factory / 实现 / version"]
+    deposit["预测地址可先收 Native / ERC20<br/>入金不会自动进行风险判定"]
+    deploy["Manager.deployVault：onlyExecutor<br/>Factory 仅接收 Manager / Controller"]
+    clone["ERC-1167 固定实现 + 同事务 initialize<br/>已有 Vault 校验代码、预测值与初始化"]
+    sweep["VaultManager.sweep<br/>SweepPermit + RISK_SIGNER 授权"]
+    sweepGuard{"租户 / Factory / 证据 / 双端 epoch<br/>路由开放；双端无 HOLD / 安全暂停？"}
+    balance["amount = expectedBalance = 实际余额<br/>签后新增粉尘 → 授权失效"]
+    consumeSweep["消费 operationId → 懒部署 Vault<br/>部署不改变 RiskRegistry 控制"]
+    depositSweep["DepositVault.sweep：仅 Manager<br/>再次查路由、目标开放与源预留底线"]
+    sweepFunds["ExactTransfer → Clearing / Treasury<br/>Clearing 另记 lot；最后 SweepExecuted"]
+    batch["batchDeployAndSweep<br/>≤ 50 项；预先拒绝重复 operationId"]
+    batchBound["gasCap 10 万～200 万 / 签名 ≤ 4096 B<br/>calldata ≤ 131072 B"]
+    batchGas{"gas 足够执行下一项？<br/>含 EIP-150 余量 + 收尾预算"}
+    batchItem["BoundedCall → executeSweepItem<br/>仅 Manager 自调用；复用 _sweep"]
+    batchStop["BatchStopped(index)<br/>停止；后续项目未执行"]
+    batchResult["失败：ItemFailed；回传截断 256 B<br/>单项回滚，其他成功项可保留"]
+    batchOuter["外层回滚 / OOG：整批仍回滚<br/>逐项核对成功事件与 operationStatus"]
+  end
+  subgraph C["观察期清算与迁移<br/>ClearingVault"]
+    direction TB
+    record["recordLot：仅本套 Manager<br/>lotId = 归集 operationId"]
+    lotBacking["唯一 lot / 金额 > 0 / 有余额覆盖<br/>outstanding += amount"]
+    maturity["LotRecorded<br/>maturity = 当前时间 + observationWindow"]
+    settle["settle(SettlementPermit, lotIds, amounts)<br/>SETTLEMENT_SIGNER；证据与 lotsHash"]
+    settleGuard{"目的地类型决定结算 / 迁移<br/>当前路由、双端 epoch 与风险开放？"}
+    migrate{"目的地为 Clearing？"}
+    ordinary["Settlement → Treasury<br/>必须已到 maturity"]
+    clearingMigration["Migration → Clearing<br/>每笔另需 Council 共签"]
+    releaseLots["_consume + _releaseLots<br/>1～50 项；同资产 / 无重复 / 不超剩余<br/>released 累加；outstanding 减总量"]
+    settleFunds["源 assertSpendable：保留总预留<br/>ExactTransfer.send(total)"]
+    importLots["迁移时目标 importLots<br/>绑定源池和旧 lot；继承原 maturity"]
+    settlementEvent["LotReleased + SettlementExecuted<br/>清算迁移不重置观察期"]
+  end
+  subgraph T["热池支付与冷池回款<br/>TreasuryVault / ColdVault"]
+    direction TB
+    treasuryFunds["Treasury 接收已结算资金<br/>或已批准的直达归集"]
+    withdraw["executeWithdrawal<br/>WithdrawalPermit"]
+    custody["transferCustody<br/>TransferPermit"]
+    withdrawAuth["WITHDRAWAL_SIGNER<br/>审批证据 / policy / signerEpoch"]
+    custodyAuth["TRANSFER_SIGNER<br/>仅 Rebalance / Migration"]
+    withdrawCouncil{"高于阈值？<br/>是：另需 Council"}
+    custodyCouncil{"迁移或高于阈值？<br/>是：另需 Council"}
+    recipient["非零 / 非本池 / 未被禁用<br/>非 Factory / 登记池<br/>非已部署 Vault"]
+    custodyRoute["登记同租户池 + 开放路由<br/>目标无 HOLD / 安全暂停"]
+    spendable["源 epoch 当前；assertSpendable<br/>余额 - amount ≥ 总预留 + safetyFloor"]
+    payBudget["_consume(requestId / operationId)<br/>consumeLimit：共享支付预算"]
+    pay["ExactTransfer → 外部收款人<br/>WithdrawalExecuted"]
+    custodyMove["ExactTransfer → Cold / Treasury<br/>TreasuryTransferred"]
+    cold["ColdVault.returnToTreasury<br/>仅 Rebalance → 登记 Treasury"]
+    coldApproval["任何金额：TRANSFER_SIGNER + Council<br/>双端 epoch / 开放路由 / 风险检查"]
+    coldReturn["_consume + consumeLimit + 精确回款<br/>保留 Cold 总预留；ColdReturned"]
+    cancelWithdrawal["cancelWithdrawal → cancelOperation<br/>requestStatus 查询当前请求状态"]
+    wasExecuted{"requestId 已 Executed？"}
+    cancelRejected["是：拒绝取消<br/>已付资金不能恢复"]
+    cancelled["否：设为 Cancelled<br/>后续执行永久拒绝"]
+  end
+  subgraph R["风险范围与案件预留<br/>RiskRegistry"]
+    direction TB
+    riskTarget{"控制资金的实际持有地址<br/>归集前 Vault；归集后逐个实际池"}
+    beforeSweep["addHold(预测 Vault, caseId)<br/>Guardian；无代码地址也可控制"]
+    afterSweep["applyPoolAssetHold<br/>Guardian：HOLD + 最低预留原子建立"]
+    scope["全资产 / 单资产 scope 分开存储<br/>caseId 独立；epoch / count / holdDigest<br/>原生币 token=0 ≠ allAssets=true"]
+    ordinaryGate["assertOpen：任一 HOLD / 安全暂停<br/>阻断该地址资产的普通流出"]
+    reserve["setReserve：绝对金额 + CAS version<br/>Guardian 只增；Council / Timelock 可减"]
+    reserveSum["totalReserve = 多案件预留之和<br/>变更单资产 epoch，旧授权失效"]
+    floor["assertBalanceFloor<br/>扣款后覆盖预留与热池安全底线"]
+    holdRelease["releaseHold：仅 Council 逐案解除<br/>其他 HOLD 与所有预留继续生效"]
+    pause["setSecurityPause(true)：Guardian / Governor<br/>解除只允许 Timelock；变化提升 epoch"]
+    digest["controlDigest：双 scope 完整快照<br/>epoch / HOLD 摘要 / pause / totalReserve"]
+    relocate["relocateReserve：仅 Controller<br/>检查源 reserveVersion；保留其他案件"]
+    quarantineReserve["受限转入：Q 为全部 amount 加预留 + HOLD<br/>释放：双端必须 assertOpen"]
+    deficit["预留超余额：普通流出被阻断<br/>已外付资产没有链上撤回入口"]
+  end
+  subgraph Q["专项隔离与受控释放<br/>DispositionController / QuarantineVault"]
+    direction TB
+    disposition["executeDisposition：onlyExecutor<br/>DispositionPermit + Council 签名"]
+    casePermit["caseId / evidence / 时间 / 资产<br/>源为绑定 Vault 或登记池"]
+    snapshot{"双端 controlDigest 与当前完全相等<br/>routeEpoch 当前；变更后旧授权拒绝"}
+    preserve{"preserveRestriction？"}
+    isolate["true：只转 Quarantine<br/>可按审批例外移动 HOLD 资金"]
+    releaseQ["false：仅 Quarantine → Treasury<br/>全部 HOLD 清除后才可释放"]
+    dispositionGuard{"Disposition 路由开放<br/>源 / 目标都无 SECURITY_PAUSED"}
+    consumeDisposition["_consume → relocateReserve<br/>隔离时 Q 按全部 amount 预留 + HOLD"]
+    deployDisposition["源为预测 Vault：Factory 独立部署<br/>源为池：沿用已登记源地址"]
+    sourceClearing{"源为 Clearing？"}
+    lotKind{"Clearing 携带登记 lot？"}
+    retireLots["核对 lotsHash 与总量<br/>prepareDisposition 退休指定 lot<br/>允许未成熟；禁止后续重复结算"]
+    unattributed["无 lot：两数组空 / lotsHash = 0<br/>仅隔离 balance - outstanding<br/>不能消耗已登记 lot"]
+    dispose["DepositVault / PoolBase.dispose<br/>仅 Controller；保留剩余预留<br/>Treasury 另保留 safetyFloor"]
+    dispositionFunds["ExactTransfer.send + DispositionExecuted<br/>预留、lot、转账与事件原子提交"]
+    qCustody["QuarantineVault 无普通支付入口<br/>只经专项批准 dispose 释放回 Treasury"]
+  end
+  external -->|治理调用| timelock
+  timelock --> authority
+  authority -->|固定租户绑定| register
+  register --> routes
+  routes -->|应急权限边界| emergency
+  emergency -->|固定资金能力边界| fixedCode
+  signature --> signers
+  signers --> permit
+  permit --> epochs
+  epochs -->|校验后消费 ID| operation
+  operation --> exact
+  exact --> atomic
+  policy -.->|当前限额版本| quota
+  predict -->|地址确定| deposit
+  deposit -->|可提前或收款后部署| deploy
+  deploy --> clone
+  external -.->|提交 Permit| sweep
+  clone -->|收款 Vault| sweep
+  sweep --> sweepGuard
+  sweepGuard -->|全部通过| balance
+  balance --> consumeSweep
+  consumeSweep --> depositSweep
+  depositSweep -->|精确转账| sweepFunds
+  batch --> batchBound
+  batchBound --> batchGas
+  batchGas -->|是| batchItem
+  batchGas -->|否| batchStop
+  batchItem -->|每项独立调用| batchResult
+  batchResult -.->|继续下一项| batchGas
+  batchResult -.->|外层事务边界| batchOuter
+  sweepFunds -->|转入后同事务记 lot| record
+  record --> lotBacking
+  lotBacking --> maturity
+  maturity -.->|另一次授权调用| settle
+  settle --> settleGuard
+  settleGuard -->|通过| migrate
+  migrate -->|否| ordinary
+  migrate -->|是| clearingMigration
+  ordinary -->|逐 lot 到期检查| releaseLots
+  clearingMigration -->|允许未成熟 lot| releaseLots
+  releaseLots --> settleFunds
+  settleFunds -->|仅迁移时| importLots
+  settleFunds -.->|普通结算完成| settlementEvent
+  importLots --> settlementEvent
+  settleFunds -->|普通结算资金| treasuryFunds
+  sweepFunds -.->|可配置直达热池| treasuryFunds
+  treasuryFunds -->|外部付款| withdraw
+  treasuryFunds -->|内部托管移动| custody
+  withdraw --> withdrawAuth
+  custody --> custodyAuth
+  withdrawAuth --> withdrawCouncil
+  custodyAuth --> custodyCouncil
+  withdrawCouncil -->|共签门槛满足| recipient
+  custodyCouncil -->|共签门槛满足| custodyRoute
+  recipient --> spendable
+  custodyRoute -->|另核对 routeEpoch / policyEpoch| spendable
+  spendable --> payBudget
+  payBudget -->|提现| pay
+  payBudget -->|托管转移| custodyMove
+  custodyMove -.->|转入 Cold 后另行授权| cold
+  cold --> coldApproval
+  coldApproval --> coldReturn
+  cancel -.->|同一取消规则| cancelWithdrawal
+  cancelWithdrawal --> wasExecuted
+  wasExecuted -->|是| cancelRejected
+  wasExecuted -->|否| cancelled
+  quota -.->|所有注册池共用计数| payBudget
+  external -.->|提交控制地址与案件| riskTarget
+  riskTarget -->|尚未归集| beforeSweep
+  riskTarget -->|已经归集| afterSweep
+  beforeSweep --> scope
+  afterSweep --> scope
+  scope -->|实时检查| ordinaryGate
+  ordinaryGate -.->|源 / 目标控制| sweepGuard
+  reserve --> reserveSum
+  reserveSum --> floor
+  holdRelease -.->|仍按其他案件判定| ordinaryGate
+  pause -->|处置也不可绕过安全暂停| digest
+  digest -.->|必须有独立案件批准| relocate
+  relocate --> quarantineReserve
+  floor -.->|可控余额不足| deficit
+  external -.->|专项批准| disposition
+  disposition --> casePermit
+  casePermit --> snapshot
+  digest -.->|核对快照| snapshot
+  snapshot -->|匹配| preserve
+  preserve -->|true| isolate
+  preserve -->|false| releaseQ
+  isolate --> dispositionGuard
+  releaseQ --> dispositionGuard
+  dispositionGuard -->|全部通过| consumeDisposition
+  consumeDisposition -.->|Controller 调用| relocate
+  consumeDisposition -->|预留先迁移| deployDisposition
+  deployDisposition --> sourceClearing
+  sourceClearing -->|是| lotKind
+  sourceClearing -->|否：lot 参数为空| dispose
+  lotKind -->|是| retireLots
+  lotKind -->|否| unattributed
+  retireLots --> dispose
+  unattributed --> dispose
+  dispose -->|精确转账| dispositionFunds
+  dispositionFunds -->|true：隔离| qCustody
+  dispositionFunds -->|false：受控释放| treasuryFunds
+  qCustody -.->|另次 Council 释放授权| disposition
+  classDef laneG fill:#e7f5ff,stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  class external,timelock,authority,register,routes,emergency,fixedCode,signature,signers,permit,epochs,operation,exact,atomic,quota,policy,cancel laneG;
+  style G fill:#e7f5ff,stroke:#1864ab,color:#1864ab,stroke-width:2px
+  classDef laneD fill:#e3fafc,stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  class predict,deposit,deploy,clone,sweep,sweepGuard,balance,consumeSweep,depositSweep,sweepFunds,batch,batchBound,batchGas,batchItem,batchStop,batchResult,batchOuter laneD;
+  style D fill:#e3fafc,stroke:#0b7285,color:#0b7285,stroke-width:2px
+  classDef laneC fill:#f3f0ff,stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  class record,lotBacking,maturity,settle,settleGuard,migrate,ordinary,clearingMigration,releaseLots,settleFunds,importLots,settlementEvent laneC;
+  style C fill:#f3f0ff,stroke:#6741d9,color:#6741d9,stroke-width:2px
+  classDef laneT fill:#ebfbee,stroke:#2b8a3e,color:#2b8a3e,stroke-width:2px;
+  class treasuryFunds,withdraw,custody,withdrawAuth,custodyAuth,withdrawCouncil,custodyCouncil,recipient,custodyRoute,spendable,payBudget,pay,custodyMove,cold,coldApproval,coldReturn,cancelWithdrawal,wasExecuted,cancelRejected,cancelled laneT;
+  style T fill:#ebfbee,stroke:#2b8a3e,color:#2b8a3e,stroke-width:2px
+  classDef laneR fill:#fff0f0,stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  class riskTarget,beforeSweep,afterSweep,scope,ordinaryGate,reserve,reserveSum,floor,holdRelease,pause,digest,relocate,quarantineReserve,deficit laneR;
+  style R fill:#fff0f0,stroke:#c92a2a,color:#c92a2a,stroke-width:2px
+  classDef laneQ fill:#fff0f6,stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  class disposition,casePermit,snapshot,preserve,isolate,releaseQ,dispositionGuard,consumeDisposition,deployDisposition,sourceClearing,lotKind,retireLots,unattributed,dispose,dispositionFunds,qCustody laneQ;
+  style Q fill:#fff0f6,stroke:#a61e4d,color:#a61e4d,stroke-width:2px
+  classDef blocked fill:#fff0f0,stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  class atomic,batchOuter,cancelRejected,beforeSweep,afterSweep,ordinaryGate,pause,deficit blocked;
+  classDef pending fill:#fff4e6,stroke:#d9480f,color:#d9480f,stroke-width:2px;
+  class batchStop,cancelled pending;
+  classDef muted fill:#f1f3f5,stroke:#495057,color:#495057,stroke-width:2px;
+  class external muted;
+  classDef funds fill:#ebfbee,stroke:#2b8a3e,color:#2b8a3e,stroke-width:2px;
+  class sweepFunds,settleFunds,treasuryFunds,pay,custodyMove,coldReturn,dispositionFunds funds;
+  classDef decision fill:#fff3bf,stroke:#d9480f,color:#b34b00,stroke-width:2px;
+  class sweepGuard,batchGas,settleGuard,migrate,withdrawCouncil,custodyCouncil,wasExecuted,riskTarget,snapshot,preserve,dispositionGuard,sourceClearing,lotKind decision;
+  linkStyle 0 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 1 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 2 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 3 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 4 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 5 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 6 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 7 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 8 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 9 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 10 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 11 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 12 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 13 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 14 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 15 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 16 stroke:#495057,color:#495057,stroke-width:2px;
+  linkStyle 17 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 18 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 19 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 20 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 21 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 22 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 23 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 24 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 25 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 26 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 27 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 28 stroke:#0b7285,color:#0b7285,stroke-width:2px;
+  linkStyle 29 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 30 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 31 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 32 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 33 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 34 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 35 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 36 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 37 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 38 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 39 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 40 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 41 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 42 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 43 stroke:#6741d9,color:#6741d9,stroke-width:2px;
+  linkStyle 44 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 45 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 46 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 47 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 48 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 49 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 50 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 51 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 52 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 53 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 54 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 55 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 56 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 57 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 58 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 59 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 60 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 61 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 62 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 63 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 64 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 65 stroke:#e8590c,color:#e8590c,stroke-width:2px;
+  linkStyle 66 stroke:#1864ab,color:#1864ab,stroke-width:2px;
+  linkStyle 67 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 68 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 69 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 70 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 71 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 72 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 73 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 74 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 75 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 76 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 77 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 78 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 79 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 80 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 81 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 82 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 83 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 84 stroke:#c92a2a,color:#c92a2a,stroke-width:2px;
+  linkStyle 85 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 86 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 87 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 88 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 89 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 90 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 91 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 92 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 93 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 94 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 95 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 96 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 97 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 98 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 99 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+  linkStyle 100 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 101 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 102 stroke:#2b8a3e,color:#2b8a3e,stroke-width:3px;
+  linkStyle 103 stroke:#a61e4d,color:#a61e4d,stroke-width:2px;
+```
+
+</details>
+
+## 7. 源码对应
+
+| 模块 | 实现文件 |
+|---|---|
+| 治理、签名与资产权限 | [TenantTimelock.sol](../../contracts/src/control/TenantTimelock.sol)、[TenantAuthority.sol](../../contracts/src/control/TenantAuthority.sol)、[TenantComponent.sol](../../contracts/src/common/TenantComponent.sol) |
+| 代码登记、路由与共享额度 | [PoolRegistry.sol](../../contracts/src/control/PoolRegistry.sol) |
+| 地址、固定 Vault 与归集 | [VaultFactory.sol](../../contracts/src/deposit/VaultFactory.sol)、[DepositVault.sol](../../contracts/src/deposit/DepositVault.sol)、[VaultManager.sol](../../contracts/src/sweep/VaultManager.sol)、[BoundedCall.sol](../../contracts/src/common/BoundedCall.sol) |
+| 观察期 lot | [ClearingVault.sol](../../contracts/src/pools/ClearingVault.sol) |
+| 提现、冷热调度 | [TreasuryVault.sol](../../contracts/src/pools/TreasuryVault.sol)、[ColdVault.sol](../../contracts/src/pools/ColdVault.sol) |
+| 案件控制与隔离 | [RiskRegistry.sol](../../contracts/src/control/RiskRegistry.sol)、[DispositionController.sol](../../contracts/src/control/DispositionController.sol)、[QuarantineVault.sol](../../contracts/src/pools/QuarantineVault.sol)、[PoolBase.sol](../../contracts/src/common/PoolBase.sol) |
+| 授权字段、一次性状态与精确转账 | [WalletTypes.sol](../../contracts/src/common/WalletTypes.sol)、[PermitHash.sol](../../contracts/src/common/PermitHash.sol)、[OperationBook.sol](../../contracts/src/common/OperationBook.sol)、[ExactTransfer.sol](../../contracts/src/common/ExactTransfer.sol) |

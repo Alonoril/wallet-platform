@@ -43,7 +43,7 @@
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     issue["申请充值地址"]
     address["获取已发行地址"]
@@ -51,21 +51,21 @@ flowchart LR
     withdraw["POST 提现"]
     notice["GET 状态 / Webhook"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     allocate["幂等分配 + 发行门槛"]
     authorize["归集准入"]
     order["订单 + Hold + 审批"]
     incident["重大风险案件"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     sweepSign["签归集 Permit"]
     settleSign["观察期后签结算"]
     paySign["签提现 / 提交交易"]
     disposition["Council 专项处置"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     predict["Factory 预测地址"]
     move["Deposit → Clearing"]
@@ -74,7 +74,7 @@ flowchart LR
     hold["原址 / 实际资金池 HOLD"]
     quarantine["受限转入 Quarantine"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     observe["发现 + 最终性 + 风控"]
     record["最终账务 + Outbox"]
@@ -153,14 +153,14 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     req["POST 申请地址"]
     pending["provisioning"]
     return["返回地址 / 资产范围"]
     deposit["可向未部署地址充值"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     check["认证租户 + 幂等"]
     allocate["分配非零 walletKey<br>永久用户/订单归属"]
@@ -169,11 +169,11 @@ flowchart LR
     gate{"发行门槛全部通过？"}
     issued["设置 ISSUED"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     predict["Factory.predictVault"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     watch["注册监控 + 回填"]
     persist["地址映射 + 证据 ACK"]
@@ -245,31 +245,31 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     send["用户向发行地址充值"]
     pending["pending_chain"]
     notify["GET 充值 / 余额<br>风险与确认分开"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     risk["KYT / 风险结论"]
     allow{"ALLOW 且覆盖完整？"}
     balance["全余额审查 / 快照"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     signature["持久准入<br>签 SweepPermit"]
     batch["Relayer 单笔 / 批次"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     verify{"当前签名/风险通过？"}
     revert["本项回滚 / 未执行"]
     move["消费 ID + 懒部署<br>精确转入 Clearing"]
     lot["recordLot + 成功事件"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     discover["logs / 成功 trace<br>覆盖 + 去重"]
     final{"链最终性满足？"}
@@ -360,20 +360,20 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     select["筛选同资产未释放 lot"]
     maturity{"链上观察期到期？"}
     wait["等待到期"]
     lots["固定 lotIds / amounts<br>lotsHash + 证据"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     sign["持久准入<br>签 SettlementPermit"]
     settleTx["Relayer 调用 settle"]
     council["迁移另需 Council"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     verify{"路由/双边风险通过？"}
     fail["整笔回滚"]
@@ -382,7 +382,7 @@ flowchart LR
     migration["迁移到登记 Clearing"]
     import["importLots 保留 maturity"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     events["最终事件 + 状态核对"]
     post["lot 镜像 / 内部迁移"]
@@ -452,14 +452,14 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     request["POST 提现<br>/v1/withdrawals"]
     reply["202 已受理"]
     reject["原订单 / 拒绝"]
     notice["GET 订单 / Webhook"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     auth["请求认证 + 幂等"]
     unique{"新订单 / 余额<br>通过？"}
@@ -467,20 +467,20 @@ flowchart LR
     risk{"风险 / 流动性<br>通过？"}
     wait["保留受限状态"]
   end
-  subgraph AUTH["签名器 / Relayer（规划）"]
+  subgraph AUTH["签名器 / Relayer"]
     direction TB
     gate["持久签名准入<br>签 WithdrawalPermit"]
     large{"高于金额阈值？"}
     council["Council 共同签名"]
     send["Relayer 提交交易"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     verify{"实时校验通过？"}
     pay["消费 requestId<br>扣额度 + 精确付款"]
     revert["整笔 revert"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     final{"最终 Executed<br>且效果匹配？"}
     uncertain["保留用户 Hold<br>继续追踪"]
@@ -569,13 +569,13 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     req["POST 取消提现"]
     reply["cancellation_requested"]
     notify["GET 订单 / Webhook"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     gate["永久关闭再授权 gate"]
     possible{"授权可能发生过？"}
@@ -585,13 +585,13 @@ flowchart LR
     direction TB
     submit["提交 cancelWithdrawal"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     status{"requestId 当前状态？"}
     cancelled["Unused → Cancelled"]
     paid["已 Executed<br>取消拒绝"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     final{"取消最终且未付款？"}
     uncertain["保留 Hold + 追踪"]
@@ -671,12 +671,12 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     pending["控制处理中"]
     status["GET 充值 / 受限余额"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     alert["重大风险 / 有效冻结"]
     gate["案件 + 本地关 gate"]
@@ -690,13 +690,13 @@ flowchart LR
     isolate["批准隔离 → 图 08"]
     release["逐案解除 HOLD"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     hold["addHold(predictedVault)"]
     cancel["撤销已签 operationId"]
     remain["同地址该资产留存"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     restricted["冻结可追回负债<br>紧急 Outbox"]
     final{"控制最终生效？"}
@@ -776,7 +776,7 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     alert["建立 incident + 关 gate"]
     scope["逐池 / 逐资产 control"]
@@ -790,7 +790,7 @@ flowchart LR
     review{"Council 决定？"}
     quarantine["批准隔离 → 图 08"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     hold["applyPoolAssetHold"]
     check["普通出口实时阻断"]
@@ -799,7 +799,7 @@ flowchart LR
     open["逐案解除 / 保留预留"]
     spend{"全控制开放<br>且覆盖底线？"}
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     locate["追溯实际资金池"]
     final["逐 scope 最终核验"]
@@ -881,7 +881,7 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     proposal["明确全部案件批准范围"]
   end
@@ -890,11 +890,11 @@ flowchart LR
     approve["签 DispositionPermit"]
     release["所有适用 HOLD 已解除<br>另签释放授权"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     send["Relayer 调用 Controller"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     snap["读取双边 controlDigest"]
     verify{"签名/快照/路由通过？"}
@@ -905,7 +905,7 @@ flowchart LR
     restricted["全额 reserve + HOLD"]
     back["preserve=false<br>只回登记 Treasury"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     final["最终处置 / 镜像过账"]
     ledger["内部移动<br>风险负债另行复核"]
@@ -977,7 +977,7 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     coldPlan["本租户转冷批准"]
     returnPlan["回款流动性批准"]
@@ -987,14 +987,14 @@ flowchart LR
     co["Council 共同签名"]
     returnCo["每笔 Council"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     sign["签 TransferPermit"]
     threshold{"高于阈值？"}
     send["提交 transferCustody"]
     returnSign["TRANSFER_SIGNER<br>+ Council 授权"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     verify{"风险/路由/预算通过？"}
     blocked["整笔回滚"]
@@ -1003,7 +1003,7 @@ flowchart LR
     check["双边控制 / 共享预算"]
     treasury["只回登记 Treasury"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     post["最终内部迁移"]
     final["ColdReturned<br>最终资产内移"]
@@ -1080,7 +1080,7 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     config["封存租户部署配置"]
     plan["PrepareActivation<br>生成公开 calldata"]
@@ -1094,18 +1094,18 @@ flowchart LR
     change["Council 排队变更"]
     approve["Council 共同批准迁移"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     deploy["DeployTenant"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     wait["Timelock 至少两天"]
     activate["登记池 + 路由 + 额度<br>最后恢复路由"]
     execute["延迟执行 + epoch 更新"]
     migrate["同租户批准路由迁移"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     verify["收据 / 代码 / 绑定核验"]
     check["最终激活证据"]
@@ -1179,11 +1179,11 @@ flowchart LR
 ```mermaid
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     facts["事件 + 状态 getter"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     coverage["规范链 / 覆盖 / 去重"]
     final{"最终性满足？"}
@@ -1193,7 +1193,7 @@ flowchart LR
     replay["恢复映射 / 证据<br>规范链回放"]
     checked{"全部事实对账通过？"}
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     pending["待确认 / 保留 Hold"]
     post["journal + 状态 + Outbox"]
@@ -1201,7 +1201,7 @@ flowchart LR
     closed["继续锁定"]
     resume["恢复发行与出金"]
   end
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     notice["Webhook 签名通知"]
     dedupe["事务去重 eventId"]

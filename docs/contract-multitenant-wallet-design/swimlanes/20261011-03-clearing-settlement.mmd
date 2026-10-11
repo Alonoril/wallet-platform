@@ -1,19 +1,19 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     select["筛选同资产未释放 lot"]
     maturity{"链上观察期到期？"}
     wait["等待到期"]
     lots["固定 lotIds / amounts<br>lotsHash + 证据"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     sign["持久准入<br>签 SettlementPermit"]
     settleTx["Relayer 调用 settle"]
     council["迁移另需 Council"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     verify{"路由/双边风险通过？"}
     fail["整笔回滚"]
@@ -22,7 +22,7 @@ flowchart LR
     migration["迁移到登记 Clearing"]
     import["importLots 保留 maturity"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     events["最终事件 + 状态核对"]
     post["lot 镜像 / 内部迁移"]

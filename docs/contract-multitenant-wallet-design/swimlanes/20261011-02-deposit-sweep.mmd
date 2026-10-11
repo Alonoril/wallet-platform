@@ -1,30 +1,30 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     send["用户向发行地址充值"]
     pending["pending_chain"]
     notify["GET 充值 / 余额<br>风险与确认分开"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     risk["KYT / 风险结论"]
     allow{"ALLOW 且覆盖完整？"}
     balance["全余额审查 / 快照"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     signature["持久准入<br>签 SweepPermit"]
     batch["Relayer 单笔 / 批次"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     verify{"当前签名/风险通过？"}
     revert["本项回滚 / 未执行"]
     move["消费 ID + 懒部署<br>精确转入 Clearing"]
     lot["recordLot + 成功事件"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     discover["logs / 成功 trace<br>覆盖 + 去重"]
     final{"链最终性满足？"}

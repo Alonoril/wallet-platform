@@ -1,13 +1,13 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     request["POST 提现<br>/v1/withdrawals"]
     reply["202 已受理"]
     reject["原订单 / 拒绝"]
     notice["GET 订单 / Webhook"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     auth["请求认证 + 幂等"]
     unique{"新订单 / 余额<br>通过？"}
@@ -15,20 +15,20 @@ flowchart LR
     risk{"风险 / 流动性<br>通过？"}
     wait["保留受限状态"]
   end
-  subgraph AUTH["签名器 / Relayer（规划）"]
+  subgraph AUTH["签名器 / Relayer"]
     direction TB
     gate["持久签名准入<br>签 WithdrawalPermit"]
     large{"高于金额阈值？"}
     council["Council 共同签名"]
     send["Relayer 提交交易"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     verify{"实时校验通过？"}
     pay["消费 requestId<br>扣额度 + 精确付款"]
     revert["整笔 revert"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     final{"最终 Executed<br>且效果匹配？"}
     uncertain["保留用户 Hold<br>继续追踪"]

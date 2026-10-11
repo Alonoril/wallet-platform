@@ -1,6 +1,6 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     proposal["明确全部案件批准范围"]
   end
@@ -9,11 +9,11 @@ flowchart LR
     approve["签 DispositionPermit"]
     release["所有适用 HOLD 已解除<br>另签释放授权"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     send["Relayer 调用 Controller"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     snap["读取双边 controlDigest"]
     verify{"签名/快照/路由通过？"}
@@ -24,7 +24,7 @@ flowchart LR
     restricted["全额 reserve + HOLD"]
     back["preserve=false<br>只回登记 Treasury"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     final["最终处置 / 镜像过账"]
     ledger["内部移动<br>风险负债另行复核"]

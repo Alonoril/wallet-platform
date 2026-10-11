@@ -2,7 +2,7 @@
 
 日期：2026-10-11。合约基准提交：`23b031f feat: implement EVM contract wallet suite`。
 
-本文对应当前 Solidity V1 入口。Rust/PostgreSQL 后端、HTTP API、索引器、KYT 接入、签名任务和 Webhook **为规划，尚未实现**；图中已明确标注。治理与运营泳道表示参与者及合约能力，不表示完整运营系统已经交付。
+本文对应当前 Solidity V1 入口。Rust/PostgreSQL 后端、HTTP API、索引器、KYT 接入、签名任务和 Webhook **尚未实现**。泳道图仅表达系统角色与交互流程；各组件的实际交付状态以本文说明为准。治理与运营泳道表示参与者及合约能力，不表示完整运营系统已经交付。
 
 ## 1. 图册入口
 

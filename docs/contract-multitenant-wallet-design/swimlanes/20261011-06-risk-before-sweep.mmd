@@ -1,11 +1,11 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     pending["控制处理中"]
     status["GET 充值 / 受限余额"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     alert["重大风险 / 有效冻结"]
     gate["案件 + 本地关 gate"]
@@ -19,13 +19,13 @@ flowchart LR
     isolate["批准隔离 → 图 08"]
     release["逐案解除 HOLD"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     hold["addHold(predictedVault)"]
     cancel["撤销已签 operationId"]
     remain["同地址该资产留存"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     restricted["冻结可追回负债<br>紧急 Outbox"]
     final{"控制最终生效？"}

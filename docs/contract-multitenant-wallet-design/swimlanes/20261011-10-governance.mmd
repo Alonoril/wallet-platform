@@ -1,6 +1,6 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     config["封存租户部署配置"]
     plan["PrepareActivation<br>生成公开 calldata"]
@@ -14,18 +14,18 @@ flowchart LR
     change["Council 排队变更"]
     approve["Council 共同批准迁移"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     deploy["DeployTenant"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     wait["Timelock 至少两天"]
     activate["登记池 + 路由 + 额度<br>最后恢复路由"]
     execute["延迟执行 + epoch 更新"]
     migrate["同租户批准路由迁移"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     verify["收据 / 代码 / 绑定核验"]
     check["最终激活证据"]

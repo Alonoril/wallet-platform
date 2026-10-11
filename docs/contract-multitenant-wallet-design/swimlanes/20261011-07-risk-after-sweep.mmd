@@ -1,6 +1,6 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     alert["建立 incident + 关 gate"]
     scope["逐池 / 逐资产 control"]
@@ -14,7 +14,7 @@ flowchart LR
     review{"Council 决定？"}
     quarantine["批准隔离 → 图 08"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     hold["applyPoolAssetHold"]
     check["普通出口实时阻断"]
@@ -23,7 +23,7 @@ flowchart LR
     open["逐案解除 / 保留预留"]
     spend{"全控制开放<br>且覆盖底线？"}
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     locate["追溯实际资金池"]
     final["逐 scope 最终核验"]

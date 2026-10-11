@@ -1,10 +1,10 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     facts["事件 + 状态 getter"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     coverage["规范链 / 覆盖 / 去重"]
     final{"最终性满足？"}
@@ -14,7 +14,7 @@ flowchart LR
     replay["恢复映射 / 证据<br>规范链回放"]
     checked{"全部事实对账通过？"}
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     pending["待确认 / 保留 Hold"]
     post["journal + 状态 + Outbox"]
@@ -22,7 +22,7 @@ flowchart LR
     closed["继续锁定"]
     resume["恢复发行与出金"]
   end
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     notice["Webhook 签名通知"]
     dedupe["事务去重 eventId"]

@@ -1,13 +1,13 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     req["POST 申请地址"]
     pending["provisioning"]
     return["返回地址 / 资产范围"]
     deposit["可向未部署地址充值"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     check["认证租户 + 幂等"]
     allocate["分配非零 walletKey<br>永久用户/订单归属"]
@@ -16,11 +16,11 @@ flowchart LR
     gate{"发行门槛全部通过？"}
     issued["设置 ISSUED"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     predict["Factory.predictVault"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     watch["注册监控 + 回填"]
     persist["地址映射 + 证据 ACK"]

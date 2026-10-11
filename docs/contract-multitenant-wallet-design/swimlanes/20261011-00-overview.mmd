@@ -1,6 +1,6 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph API["租户 / API（规划）"]
+  subgraph API["租户 / API"]
     direction TB
     issue["申请充值地址"]
     address["获取已发行地址"]
@@ -8,21 +8,21 @@ flowchart LR
     withdraw["POST 提现"]
     notice["GET 状态 / Webhook"]
   end
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     allocate["幂等分配 + 发行门槛"]
     authorize["归集准入"]
     order["订单 + Hold + 审批"]
     incident["重大风险案件"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     sweepSign["签归集 Permit"]
     settleSign["观察期后签结算"]
     paySign["签提现 / 提交交易"]
     disposition["Council 专项处置"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     predict["Factory 预测地址"]
     move["Deposit → Clearing"]
@@ -31,7 +31,7 @@ flowchart LR
     hold["原址 / 实际资金池 HOLD"]
     quarantine["受限转入 Quarantine"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     observe["发现 + 最终性 + 风控"]
     record["最终账务 + Outbox"]

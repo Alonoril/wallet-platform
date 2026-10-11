@@ -1,6 +1,6 @@
 %%{init: {"theme":"base","flowchart":{"curve":"linear"},"themeVariables":{"lineColor":"#1971c2","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  subgraph APP["后端业务（规划）"]
+  subgraph APP["后端业务"]
     direction TB
     coldPlan["本租户转冷批准"]
     returnPlan["回款流动性批准"]
@@ -10,14 +10,14 @@ flowchart LR
     co["Council 共同签名"]
     returnCo["每笔 Council"]
   end
-  subgraph AUTH["授权 / 执行（规划）"]
+  subgraph AUTH["授权 / 执行"]
     direction TB
     sign["签 TransferPermit"]
     threshold{"高于阈值？"}
     send["提交 transferCustody"]
     returnSign["TRANSFER_SIGNER<br>+ Council 授权"]
   end
-  subgraph EVM["EVM 合约（已实现）"]
+  subgraph EVM["EVM 合约"]
     direction TB
     verify{"风险/路由/预算通过？"}
     blocked["整笔回滚"]
@@ -26,7 +26,7 @@ flowchart LR
     check["双边控制 / 共享预算"]
     treasury["只回登记 Treasury"]
   end
-  subgraph BOOK["索引 / 账本（规划）"]
+  subgraph BOOK["索引 / 账本"]
     direction TB
     post["最终内部迁移"]
     final["ColdReturned<br>最终资产内移"]

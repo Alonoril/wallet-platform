@@ -1,0 +1,40 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor L as Relayer<br/>送交易
+actor C as Council<br/>离线批准
+box rgb(232,250,241) 热冷资金托管
+  participant T as TreasuryVault<br/>在线热池
+  participant D as ColdVault<br/>离线控制冷池
+  participant P as PoolRegistry<br/>固定路由及共享预算
+end
+participant R as RiskRegistry<br/>双端预留与限制
+participant X as 资产余额<br/>Native / ERC20
+rect rgb(232,250,241)
+  Note over L,X: 阶段一：减少热池敞口，转入固定冷池
+  L->>T: transferCustody(转冷 Permit, 用途签名, 必要共签)
+  T->>T: 核验调拨用途、当前版本、精确金额和唯一 ID
+  T->>P: 核验 Treasury → Cold 的同租户托管路由
+  T->>R: 检查双方开放，源剩余额度覆盖预留和热池底线
+  T->>P: 消费租户共享支付预算
+  T->>T: 消费调拨 ID
+  T->>X: 精确转账至固定 Cold
+  X-->>D: 托管资产到账
+  T-->>L: CustodyTransferred
+end
+rect rgb(235,242,255)
+  Note over L,X: 阶段二：补充热池流动性，另签独立回款授权
+  C->>C: 审核回款目标、金额、有效期、当前风险和政策
+  C-->>L: Council 对该笔回款签名，不授予无限权限
+  L->>D: returnToTreasury(回款 Permit, 用途签名, Council 批准)
+  D->>D: 核验两种批准、回款用途、请求 ID 和当前版本
+  D->>P: 检查 Cold → 登记 Treasury 的固定路由
+  D->>R: 双端必须开放，源扣除后仍覆盖案件预留
+  D->>P: 消费与全部 Treasury 共用的预算
+  D->>D: 消费回款 ID
+  D->>X: 精确转账至批准的 Treasury
+  X-->>T: 热池流动性到账
+  D-->>L: ColdReturned
+end
+Note over T,P: 同租户 Treasury → Treasury 迁移也使用登记路由<br/>迁移需独立批准，原共享预算和风险控制持续生效
+Note over T,X: 两个阶段是不同事务，不自动连续执行<br/>任一阶段失败只回滚该阶段；冷池无任意对外支付出口

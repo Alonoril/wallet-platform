@@ -1,0 +1,44 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor S as 业务签名者<br/>用途隔离的密钥
+actor L as Relayer<br/>Executor
+box rgb(235,242,255) 通用执行约束
+  participant E as EntryContract<br/>资金入口合约
+  participant A as TenantAuthority<br/>角色与 signerEpoch
+  participant P as PoolRegistry<br/>路由与预算
+end
+box rgb(255,235,238) 当前风险状态
+  participant R as RiskRegistry<br/>双端控制快照
+end
+participant X as 资产转移<br/>Native / ERC20
+S->>S: 构造精确业务 Permit，签署 EIP-712 digest
+S-->>L: Permit + 在线签名 + 必要的 Council 批准
+L->>E: execute(Permit, signatures)
+activate E
+E->>A: 查询 Executor、用途签名者、资产及当前版本
+A-->>E: 返回当前权限与配置
+E->>E: 校验 Domain、用途、租户、金额、目标、证据和有效期
+E->>E: 验证 EOA 或 ERC1271 签名；按政策核验 Council
+E->>R: 查询源与目标全资产/单资产控制状态
+R-->>E: 返回 HOLD、pause、预留及当前 epoch
+E->>P: 查询当前路由、池类型和政策版本
+P-->>E: 返回固定路由与共享限额
+break 任一授权或状态检查不满足
+  E-->>L: revert；授权和资金均未消费
+end
+rect rgb(232,250,241)
+  E->>E: 拒绝重入；检查请求状态 Unused
+  E->>E: 请求状态写入 Executed，更新本次业务状态
+  E->>P: 消费适用的共享支付预算
+  P->>P: 只接受登记资金入口；记录预算，与执行同事务
+  E->>X: 按签名金额精确转账
+  X-->>E: 返回转账结果；核验源减量和目标增量
+  alt 任一步失败或余额变化不符
+    E-->>L: revert：请求、预算、业务状态和转账全部回滚
+  else 全部成功
+    E-->>L: 发出业务成功事件，携带 ID、金额、目标及证据摘要
+  end
+end
+deactivate E
+Note over E,X: 所有普通出口共用当前风险和预留底线<br/>外部回调不能绕过执行锁，收费或变基代币不能冒充精确转账

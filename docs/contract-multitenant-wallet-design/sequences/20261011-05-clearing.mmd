@@ -1,0 +1,42 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor L as Relayer<br/>提交结算授权
+participant M as VaultManager<br/>归集编排
+box rgb(242,235,255) 观察期资金池
+  participant C as ClearingVault<br/>lot 与 outstanding
+end
+participant R as RiskRegistry<br/>源与目标风控
+participant P as PoolRegistry<br/>结算路由
+box rgb(232,250,241) 可支付资金池
+  participant T as TreasuryVault<br/>接收已结算资金
+end
+participant X as 资产余额<br/>Native / ERC20
+rect rgb(242,235,255)
+  M->>C: 资产已到账后 recordLot(ID, token, amount)
+  C->>X: 查询当前余额
+  X-->>C: balance
+  C->>C: 检查 lot 唯一，balance >= outstanding + amount
+  C->>C: 存储 amount / released=0 / maturity；增加 outstanding
+  C-->>M: LotRecorded
+end
+Note over C,T: 观察期未满时不得普通结算<br/>观察期降低不能追溯缩短已有 lot 的 maturity
+L->>C: settle(Permit, lotIds, amounts, settlementSignature)
+C->>C: 核验 Executor、签名、有效期和 lotsHash
+C->>C: 检查列表有界、无重复、同资产、成熟及剩余额度
+C->>R: 检查双端无 HOLD / pause，源扣除后仍覆盖预留
+R-->>C: 当前风险版本匹配，允许普通流出
+C->>P: 核验允许的 Treasury 目标和 routeEpoch
+P-->>C: 固定目标、同租户、开放路由
+break 未成熟 / 超额 / 重复 / 任一限制不满足
+  C-->>L: revert；lot 和资金均保持原状态
+end
+rect rgb(232,250,241)
+  C->>C: 消费结算 ID；released += 本次金额
+  C->>C: outstanding -= 本次总额
+  C->>X: 精确转账本次总额至 Treasury
+  X-->>T: 收到相同金额
+  C->>X: 核验转账差额及剩余余额覆盖 outstanding
+  C-->>L: SettlementExecuted + 逐 lot 释放事件
+end
+Note over C,X: lot 不是用户链上账户，也不表示物理区分同质化币<br/>任何失败必须连同 released / outstanding 一起回滚

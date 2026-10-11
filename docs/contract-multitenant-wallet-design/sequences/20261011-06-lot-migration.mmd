@@ -1,0 +1,35 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor C as Council<br/>迁移独立批准
+actor L as Relayer<br/>提交迁移授权
+box rgb(242,235,255) 原子迁移
+  participant S as SourceClearing<br/>退休剩余份额
+  participant D as TargetClearing<br/>继承观察期
+end
+participant P as PoolRegistry<br/>同类迁移路由
+participant R as RiskRegistry<br/>双端限制与预留
+participant X as 资产余额<br/>Native / ERC20
+C->>C: 审核目标绑定、来源 lot、maturity 和迁移金额
+C-->>L: 签署精确迁移内容及当前控制版本
+L->>S: migrateLots(迁移 Permit, 在线签名, Council 批准)
+S->>S: 核验授权、唯一迁移 ID 和有界 lot 列表
+S->>P: 检查同租户 Clearing → Clearing 路由
+P-->>S: 目标类型、代码身份和 routeEpoch 匹配
+S->>R: 检查双方限制，计算源剩余预留底线
+R-->>S: 当前控制状态满足迁移条件
+S->>S: 校验每个 lot 剩余份额；迁移不要求先成熟
+rect rgb(232,250,241)
+  S->>S: 消费迁移 ID；退休本次份额，减少 outstanding
+  S->>X: 精确转账总额至目标 Clearing
+  X-->>D: 资产到账
+  S->>D: importLots(迁移 ID, 源 lot, 份额, 原 maturity)
+  D->>P: 再查源登记身份、同类路由及当前版本
+  D->>R: 再查源和目标风险约束
+  D->>X: 确认到账余额覆盖新增 outstanding
+  D->>D: 生成含来源域的新 lot ID，拒绝重复迁移导入
+  D->>D: 导入剩余份额，继承每个原 maturity
+  D-->>S: LotsImported(来源映射)
+  S-->>L: MigrationExecuted(源 / 目标 / 总额)
+end
+Note over S,D: 目标拒绝导入则整笔迁移回滚，源份额恢复<br/>新 ID 不重新开始或缩短观察期，也不增加可支付权利

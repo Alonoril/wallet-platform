@@ -1,0 +1,44 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor G as Guardian<br/>提交风险控制
+actor C as Council<br/>案件解除审批
+actor L as Relayer<br/>可能持有旧授权
+box rgb(255,235,238) 可先于部署生效
+  participant R as RiskRegistry<br/>HOLD / epoch / caseId
+end
+participant M as VaultManager<br/>归集入口
+participant F as VaultFactory<br/>部署入口
+participant V as DepositVault<br/>尚未部署或已部署
+participant X as 资产余额<br/>第三方可继续转入
+rect rgb(255,235,238)
+  G->>R: addHold(caseId, predictedAddress, assetScope, evidenceHash)
+  R->>R: 核验 Guardian 和租户域；登记独立案件 HOLD
+  R->>R: 更新 HOLD 集合摘要、计数及 scopeEpoch
+  R-->>G: HoldAdded(caseId, address, scope, newEpoch)
+  L->>M: 提交冻结前签署的 SweepPermit
+  M->>R: 检查当前 HOLD 及 permit.riskEpoch
+  R-->>M: 存在 HOLD，且旧 epoch 已失配
+  M--xL: 拒绝归集，请求 ID 不消费
+  L->>M: 请求部署该 Vault
+  M->>M: 检查 Executor，不解除原地址风险限制
+  M->>F: 请求确定性部署
+  F->>V: 原子部署并初始化固定绑定
+  V->>R: 后续资金出口读取同一地址的风险状态
+  R-->>V: 原 HOLD 持续有效，部署不重置
+  X-->>V: 第三方仍可继续入金
+end
+rect rgb(235,242,255)
+  C->>R: releaseHold(仅指定 caseId, 最新证据 / 批准)
+  R->>R: 移除该案 HOLD，再次递增 scopeEpoch
+  alt 仍有其他 HOLD 或安全暂停
+    R-->>C: 当前 scope 继续限制普通资金流出
+  else 所有 HOLD 与安全暂停均已解除
+    R-->>C: 普通路径可重新评估，案件预留仍需单独处理
+  end
+  L->>M: 再次提交冻结前的旧归集签名
+  M->>R: 读取当前风险版本
+  R-->>M: 解除后的新 epoch 仍不等于旧签名 epoch
+  M--xL: 旧签名持续失效，须按当前余额重新签署
+end
+Note over R,V: 合约接受控制命令，不能自行判定哪笔入金是风险资金<br/>需要隔离时转入专项 Controller 流程，不能直接解冻后扫款

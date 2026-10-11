@@ -1,0 +1,43 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor L as Relayer<br/>提交提现 Permit
+actor C as Guardian / Council<br/>取消及高额批准
+box rgb(232,250,241) 普通对外支付
+  participant T as TreasuryVault<br/>请求状态与付款
+  participant P as PoolRegistry<br/>共享支付预算
+end
+participant A as TenantAuthority<br/>用途签名与政策
+participant R as RiskRegistry<br/>案件预留 / HOLD
+participant X as 资产转移<br/>Native / ERC20
+actor U as 外部收款人
+opt 政策要求高额独立共签
+  C-->>L: Council 批准同一份请求内容，绑定当前政策版本
+end
+alt 取消交易先被执行
+  C->>T: cancel(requestId)
+  T->>A: 校验取消角色
+  T->>T: Unused → Cancelled，发出取消事件
+  L->>T: executeWithdrawal(旧 Permit)
+  T--xL: 请求已取消，拒绝付款
+else 付款交易先被执行
+  L->>T: executeWithdrawal(Permit, paymentSignature, approvals)
+  T->>A: 核验 Executor、付款签名者、资产和 policyEpoch
+  T->>T: 检查收款地址、金额、有效期、请求状态及必要共签
+  Note over T,U: 收款对象不得为受限名单或已知内部资金地址<br/>尚未部署的预测地址难以全部枚举，签名政策也须限制目的地
+  T->>R: 检查 Treasury 本资产与全资产 HOLD / pause / epoch
+  R-->>T: 返回 totalReserve 和当前开放状态
+  T->>X: 查询付款前真实余额
+  X-->>T: balance
+  T->>T: 检查 balance - amount >= totalReserve + safetyFloor
+  T->>P: 原子消费单笔 / 时间窗 / 租户共享支付限额
+  P-->>T: 额度通过并记录占用
+  T->>T: 消费 requestId，写入 Executed
+  T->>X: 精确转账指定金额至指定收款人
+  X-->>U: 到账 amount
+  T->>X: 核验双端余额变化
+  T-->>L: WithdrawalExecuted(requestId, token, amount, recipient)
+  C->>T: 稍后 cancel(同一 requestId)
+  T--xC: 已执行；没有逆转外部付款的入口
+end
+Note over T,U: 任一检查、预算消费或转账失败，本次事务整体回滚<br/>付款已确认后，追回外部资产需要链外处置或接收方配合

@@ -1,0 +1,42 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor C as Council<br/>离线治理多签
+actor D as Deployer<br/>部署事务发起者
+box rgb(235,242,255) 租户治理
+  participant T as TenantTimelock<br/>延迟执行
+  participant A as TenantAuthority<br/>权限与签名版本
+end
+box rgb(255,235,238) 风险控制
+  participant R as RiskRegistry<br/>案件与预留
+end
+box rgb(232,250,241) 资金与路由
+  participant P as PoolRegistry<br/>池登记与限额
+  participant V as ContractSet<br/>Factory及各资金合约
+end
+rect rgb(235,242,255)
+  Note over C,V: 准备阶段：执行者和资金路由保持关闭<br/>链 / tenantKey / poolId 是整套协议的隔离边界
+  D->>D: 预计算固定互绑地址，核对租户部署清单
+  D->>T: 部署时间锁，绑定治理多签及最小延迟
+  D->>A: 部署租户权限，设置不可变租户标识
+  D->>R: 部署风险状态，绑定 Authority
+  D->>P: 部署路由和共享预算，绑定租户及 RiskRegistry
+  D->>V: 部署资金池、Manager、Factory、Controller
+  V->>V: 原子初始化固定地址互绑，锁定重复初始化
+  D->>P: 在受限初始化阶段登记池类型、地址及代码身份
+  P->>V: 读取并核对固定绑定与资金出口类型
+  V-->>P: 返回租户、治理、风险及池绑定
+  P->>P: 仅记录通过核对的池，路由仍未激活
+  D->>A: 封闭初始化权限；后续配置仅按治理角色执行
+end
+rect rgb(232,250,241)
+  C->>T: 排队激活参数，绑定 payloadHash 和执行时间
+  T->>T: 等待治理延迟，拒绝重复或提前执行
+  C->>T: execute(精确激活参数)
+  T->>A: 设置用途隔离的签名者、资产、Executor
+  T->>P: 配置观察期、限额、目标路由与安全底线
+  T->>P: 开放已核对路由，递增配置版本
+  A-->>C: 发出权限配置事件
+  P-->>C: 发出路由激活事件
+  Note over A,V: 资金合约每次执行仍检查当前权限和风险<br/>部署成功或登记成功不等于获得任意转账权限
+end

@@ -1,0 +1,43 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor L as Relayer<br/>批量交易发起者
+box rgb(228,249,252) 批次与单项事务
+  participant M as VaultManager<br/>外层批次
+  participant I as ItemSubcall<br/>Manager的仅自调用入口
+  participant V as DepositVault<br/>第 i 个地址
+end
+participant R as RiskRegistry<br/>每项实时核验
+participant C as Clearing / Treasury<br/>接收池
+L->>M: batchSweep(逐项 Permit / signature / gasCap)
+M->>M: 预检数组边界、重复 ID、签名大小和单项 gas 上限
+M->>M: 建立外层执行锁，预留收尾事件的 gas
+loop 逐项执行，不能越过批次上限
+  alt 剩余 gas 足够执行当前项和收尾
+    M->>I: 有 gas 上限的 self-call executeItem(i)
+    activate I
+    Note over M,I: 内层入口只允许 Manager 自调用<br/>锁的设计必须允许这条受限内部路径，拒绝其他重入
+    I->>I: 独立验证当前项签名、版本、金额和请求状态
+    I->>R: 检查当前源与目标的风险状态
+    I->>V: 执行当前项部署 / 固定出口 / 精确转账
+    alt 当前项成功
+      V-->>I: 返回到账结果
+      I->>C: 必要时登记当前项 lot
+      I-->>M: success + 当前项成功事件
+    else 子调用 revert 或耗尽其 gas
+      I--xM: 子调用失败，当前项所有效果回滚
+      M->>M: 截断返回数据，记录有限长度错误摘要
+      M-->>L: ItemFailed(i, requestId, errorDigest)
+    end
+    deactivate I
+  else gas 不足
+    M-->>L: BatchStopped(firstUnexecuted)
+    Note over M,C: 停止循环，不执行后续项
+  end
+end
+alt 外层正常结束
+  M-->>L: 返回逐项结果；成功项可在同一交易中保留
+else 外层 OOG 或最终 revert
+  M--xL: 整批回滚，包括先前成功项、lot 和事件
+end
+Note over L,C: 外层交易成功不代表每一项成功<br/>重试失败/未执行项，不重签已成功业务的新 ID

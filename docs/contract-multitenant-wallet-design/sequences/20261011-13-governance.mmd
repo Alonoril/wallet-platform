@@ -1,0 +1,43 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor G as Guardian<br/>紧急收紧
+actor C as Council<br/>离线治理
+box rgb(235,242,255) 延迟治理与版本
+  participant T as TenantTimelock<br/>排队与精确执行
+  participant A as TenantAuthority<br/>执行者及签名用途
+  participant P as PoolRegistry<br/>路由与共享限额
+end
+participant R as RiskRegistry<br/>安全暂停和案件状态
+participant V as Old / New Vault<br/>固定代码的不同版本
+rect rgb(255,235,238)
+  G->>A: 禁用 Executor 或特定用途签名者，提升对应版本
+  G->>P: 暂停资金路由，收紧共享限额
+  G->>R: 对受影响池 / 资产设置 SECURITY_PAUSED
+  R->>R: 提升控制 epoch，阻断所有相应资金出口
+  Note over A,V: 单独暂停内部路由不足以暂停外部提现<br/>使用池资产风险控制或 Executor 禁用覆盖付款入口
+end
+rect rgb(235,242,255)
+  C->>T: schedule(恢复参数 / payloadHash / 最早执行时间)
+  T->>T: 等待最小治理延迟，保留观察和取消窗口
+  alt 出现新证据，应撤销恢复
+    C->>T: cancel(该治理 operationId)
+    T->>T: 标记取消，拒绝以后执行该排队操作
+  else 未取消且延迟已到
+    C->>T: execute(精确排队参数)
+    T->>A: 恢复或轮换用途签名者 / Executor，提升版本
+    T->>P: 放宽限额或恢复批准的路由，提升配置版本
+    T->>R: 按批准解除安全暂停，提升控制 epoch
+  end
+  Note over R,V: 案件 HOLD 和案件预留仍需各自批准处理<br/>时间锁恢复不会自动抹除案件限制，也不复活旧签名
+end
+rect rgb(232,250,241)
+  C->>T: 排队登记已核验的新版本与迁移路由
+  T->>V: 核验已部署新版本的不可变绑定与权限配置
+  T->>P: 登记新池代码身份，开放批准的迁移路由
+  P->>P: 保留租户共享预算，不因新池出现而清零
+  C->>V: 另签精确资产迁移授权和最新控制快照
+  V->>R: 查双方风险；不能用换版本绕过 HOLD 或预留
+  V->>V: 执行符合池类型的迁移，Clearing 继承 lot maturity
+  Note over P,V: 旧充值地址仍属于旧 Factory 域并继续受原控制<br/>旧请求状态不清空，新版本业务 ID 仍需避免经济业务重复执行
+end

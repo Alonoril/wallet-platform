@@ -1,0 +1,48 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor G as Guardian<br/>根据来源证据下控制命令
+actor C as Council<br/>案件预算与恢复批准
+box rgb(255,235,238) 风险总账
+  participant R as RiskRegistry<br/>按池 / 资产 / 案件
+end
+box rgb(232,250,241) 实际持有资金的池
+  participant S as ClearingVault<br/>观察期资金
+  participant T as TreasuryVault<br/>混合热池余额
+  participant D as ColdVault<br/>已转冷余额
+end
+actor L as Relayer<br/>可能提交旧授权
+participant X as 当前链上余额
+rect rgb(255,235,238)
+  Note over G,X: 风险发现时先定位当前持有池，再阻断普通出口<br/>控制交易只能约束其链上执行之后的交易，不能追回已先执行的付款
+  loop 对每个实际受影响的池及资产
+    G->>R: 原子 addHold + setMinimumReserve(caseId, pool, token, amount)
+    R->>R: 核验租户；同案幂等，不重复累计案件预留
+    R->>R: 建立 HOLD，更新该案绝对预留和 CAS version
+    R->>R: totalReserve = 各案件预留之和；递增控制 epoch
+    R-->>G: 发出案件、总预留和新控制版本事件
+  end
+  L->>T: 提交旧提现 / 转冷 / 迁移 Permit
+  T->>R: 检查本池当前 HOLD / pause / riskEpoch
+  R-->>T: 普通流出被阻断，旧授权版本失配
+  T--xL: 拒绝执行，ID 与付款额度不消费
+  L->>S: 提交旧结算授权
+  S->>R: 检查本池限制
+  R-->>S: 拒绝普通结算
+  L->>D: 提交旧回热授权
+  D->>R: 检查本池限制
+  R-->>D: 拒绝普通回款
+end
+rect rgb(255,246,221)
+  C->>X: 获取各池余额、在途执行结果与来源证据
+  X-->>C: 当前可控制余额，不包括已外部付款
+  C->>C: 分别确认案件义务、可控隔离量与未覆盖缺口
+  alt 需要专项隔离
+    C-->>L: 对当前双端快照及隔离金额签署 Controller 授权
+  else 可恢复部分普通业务
+    C->>R: 以 CAS 调整该案绝对预留，保留案件义务证据
+    C->>R: 独立解除该案 HOLD，其他案件保持有效
+    R-->>C: 递增控制版本；后续出口仍遵守 totalReserve
+  end
+  Note over R,X: 如果余额低于总预留，普通出口必须继续失败<br/>不能自动减少预留，也不能跨租户挪用余额填补缺口
+end

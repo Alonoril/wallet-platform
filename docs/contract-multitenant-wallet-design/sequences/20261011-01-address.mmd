@@ -1,0 +1,48 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor U as 用户 / 外部转账者
+actor L as Relayer<br/>仅提交交易
+box rgb(228,249,252) 充值地址体系
+  participant M as VaultManager<br/>授权部署入口
+  participant F as VaultFactory<br/>地址计算与部署
+  participant I as DepositImplementation<br/>固定逻辑实现
+  participant V as DepositVault<br/>用户合约地址
+end
+box rgb(255,235,238) 独立风险状态
+  participant R as RiskRegistry<br/>可记录无代码地址
+end
+participant X as 资产余额<br/>Native / ERC20
+rect rgb(228,249,252)
+  L->>F: predict(chain, tenantKey, walletKey, addressVersion)
+  F->>F: 计算域隔离 salt 和固定 Clone initCodeHash
+  F-->>L: predictedAddress<br/>keccak256(0xff, Factory, salt, initCodeHash) 的后20字节
+  Note over F,I: ERC-1167 Clone 的 delegatecall 目标固定<br/>用户余额和存储位于 Clone，逻辑实现本身不托管充值
+  U->>X: 将 Native 或 ERC20 转入 predictedAddress
+  X-->>U: 资产层确认转账；此时 Vault 可以尚未部署
+  Note over V,X: 未部署地址无法自行发出合约充值事件<br/>原生币由交易/余额识别，ERC20 由代币事件识别
+end
+rect rgb(235,242,255)
+  L->>M: deploy(walletKey)
+  M->>M: 校验 Executor，禁止任意地址获得部署权限
+  M->>F: 请求部署已绑定用户地址
+  F->>F: 只允许 Manager / Controller；核对地址域和固定实现
+  alt 地址尚无代码
+    F->>V: CREATE2 部署固定实现 Clone
+    F->>V: 同一事务 initialize(租户、Manager、Controller、Risk)
+    V->>I: delegatecall 固定实现的初始化逻辑
+    I->>I: 在 Clone 上下文校验 Factory 来源和一次性初始化
+    I-->>V: 绑定写入 Clone 存储；返回初始化结果
+    V->>V: 永久锁定重复初始化
+    V-->>F: 返回初始化完成状态
+  else 地址已经部署
+    F->>V: 核对本 Factory 登记、固定绑定和初始化状态
+    V-->>F: 返回已登记 Vault
+  end
+  F-->>M: VaultDeployed / 已存在地址
+  M-->>L: 返回用户 Vault 地址
+  V->>R: 后续主动转账前读取当前限制
+  R-->>V: 返回该地址的 HOLD、pause、reserve 和 epoch
+  Note over I,V: delegatecall 保持原调用者，address(this) 和余额属于 Clone<br/>实现自身应锁定初始化，不替任何用户持有余额
+  Note over V,R: 风险按地址登记，部署前后的身份连续<br/>不能用部署、重部署或版本切换绕过冻结
+end

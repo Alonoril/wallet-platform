@@ -1,0 +1,48 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor C as Council / Timelock<br/>按权限解除限制
+actor L as Relayer<br/>提交新释放授权
+box rgb(255,233,245) 隔离与受控出口
+  participant D as DispositionController<br/>审核释放模式
+  participant Q as QuarantineVault<br/>无普通支付出口
+end
+participant R as RiskRegistry<br/>多案件限制及预留
+participant P as PoolRegistry<br/>Quarantine → Treasury
+participant T as TreasuryVault<br/>重新托管资金
+participant X as 资产余额<br/>Native / ERC20
+rect rgb(235,242,255)
+  C->>R: 对已结案的指定 caseId 解除 HOLD
+  R->>R: 清除此案件 HOLD，递增 epoch；不自动清除其他案件
+  opt 仍存在安全暂停
+    C->>R: 经时间锁批准后解除 SECURITY_PAUSED
+    R->>R: 递增控制版本
+  end
+  C->>R: 读取释放后的双端最新完整控制摘要
+  R-->>C: 当前 HOLD、pause、预留和版本
+  C-->>L: 签署独立 ReleasePermit，绑定精确金额和登记 Treasury
+end
+L->>D: release(新 Permit, CouncilSignature)
+D->>D: 检查模式只能为 Quarantine → Treasury，核验新 ID 和签名
+D->>R: 核验双端所有 HOLD / pause 均解除，快照匹配
+D->>P: 检查同租户受控释放路由与目标类型
+break 任一其他案件仍 HOLD / pause 或快照不匹配
+  D-->>L: 拒绝释放，即使该案自身已解除
+end
+rect rgb(232,250,241)
+  D->>D: 消费释放 ID
+  D->>R: 按批准 amount 减记源该案预留，核验 CAS version
+  R->>R: 要求 amount 不超过该案预留，拒绝减成负值
+  R->>R: 保留所有其他案件预留，目标本次不新增该案限制
+  R-->>D: 返回源剩余总预留
+  D->>Q: dispose(批准的 Treasury, token, amount)
+  Q->>R: 再查当前开放状态和剩余预留底线
+  Q->>X: 精确转账至 Treasury
+  X-->>T: 接收 amount
+  D-->>L: ReleaseExecuted(案件、金额、目标和证据)
+end
+Note over Q,T: 部分释放后，源剩余余额必须覆盖其剩余预留<br/>目标原有的其他案件预留不会因此消失
+L->>T: 若需外部支付，另提交独立 WithdrawalPermit
+T->>R: 再次检查当前风险与 Treasury 总预留
+T->>T: 独立核验付款签名、政策、限额和请求状态
+Note over T,X: 释放不是退款，外部支付需按提现序列单独执行<br/>转入或转出 Quarantine 不证明历史风险来源已经消失

@@ -1,0 +1,56 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, PingFang SC, Microsoft YaHei, sans-serif","fontSize":"18px","primaryColor":"#edf2ff","primaryTextColor":"#243b75","primaryBorderColor":"#5c7cfa","lineColor":"#345995","actorBkg":"#edf2ff","actorBorder":"#5c7cfa","actorTextColor":"#243b75","actorLineColor":"#94a3b8","signalColor":"#345995","signalTextColor":"#17345b","labelBoxBkgColor":"#fff4d6","labelBoxBorderColor":"#f59f00","labelTextColor":"#8a4b08","loopTextColor":"#8a4b08","noteBkgColor":"#fff8db","noteTextColor":"#724713","noteBorderColor":"#e0b64f","activationBkgColor":"#dbeafe","activationBorderColor":"#4c6ef5","sequenceNumberColor":"#ffffff"},"sequence":{"useMaxWidth":false,"wrap":false,"mirrorActors":true,"actorMargin":65,"width":175,"height":70,"boxMargin":14,"boxTextMargin":12,"messageMargin":42,"noteMargin":14,"diagramMarginX":30,"diagramMarginY":25}}}%%
+sequenceDiagram
+    autonumber
+actor C as Council<br/>审核全部当前限制
+actor L as Relayer<br/>执行处置授权
+box rgb(255,233,245) 受限隔离
+  participant D as DispositionController<br/>唯一例外编排
+  participant Q as QuarantineVault<br/>全额受限保管
+end
+participant R as RiskRegistry<br/>控制摘要与案件预留
+participant P as PoolRegistry<br/>专项处置路由
+participant F as VaultFactory<br/>必要时部署源地址
+participant S as SourceVault<br/>Deposit / Clearing / Treasury / Cold
+participant X as 资产余额<br/>Native / ERC20
+C->>R: 查询源 / 目标全资产及单资产控制摘要
+R-->>C: epochs、全部 HOLD 摘要、pause、总预留及 reserveVersion
+C->>C: 审核所有约束，批准 caseId / amount / reserveToMove / lotsHash
+C-->>L: Council 签署双端快照、目标 Quarantine、证据和有效期
+L->>D: isolate(Permit, CouncilSignature, lotDetails)
+D->>D: 验证 Executor、签名、金额、唯一 ID 和完整业务绑定
+D->>R: 核对当前双端 controlDigest 与源 reserveVersion
+R-->>D: 快照匹配；双方均无 SECURITY_PAUSED
+D->>P: 核验源身份和同租户 Quarantine 专项路由
+P-->>D: 允许受限隔离，不能改为任意外部收款人
+break 快照变化 / 安全暂停 / 签名或路由失配
+  D-->>L: revert，需重新审核并批准
+end
+rect rgb(255,233,245)
+  D->>D: 消费处置 ID，锁定本次编排
+  D->>R: 原子迁移该案预留，目标增加全部 amount 的预留和 HOLD
+  R->>R: 校验 reserveToMove <= amount 且不超过源该案预留
+  R->>R: 源只减少批准 reserveToMove；其他案件预留保留
+  R->>R: 目标按完整 amount 受限；双方控制版本递增
+  R-->>D: 返回更新后的源剩余预留底线
+  opt 来源为尚未部署的预测 DepositVault
+    D->>F: ensureDeployed(批准的 walletKey)
+    F->>S: CREATE2 部署并原子初始化固定绑定
+    F-->>D: 返回批准的源地址，原风险状态持续
+  end
+  alt 来源为 Clearing 且包含登记 lot
+    D->>S: prepareDisposition(lotIds, amounts, lotsHash)
+    S->>S: 核验来源权限、列表唯一和退休总额=amount
+    S->>S: 退休本次份额并减少 outstanding，允许未成熟份额
+  else 来源为 Clearing 的未登记直接入金
+    D->>S: 校验 lot 列表为空，amount <= balance - outstanding
+  else 来源为其他 Vault
+    D->>D: 要求 lot 参数为空，拒绝无意义的 lot 声明
+  end
+  D->>S: dispose(固定 Quarantine, token, amount, caseId)
+  S->>S: 仅允许 Controller；剩余余额覆盖其他案件和适用安全底线
+  S->>R: 再核验无安全暂停及更新后的剩余总预留
+  S->>X: 精确转账至已登记 Quarantine
+  X-->>Q: 接收 amount，全部资金已有目标限制
+  D-->>L: DispositionExecuted(案件、源、目标、金额、证据)
+end
+Note over D,X: 预留迁移、lot 退休、部署和转账必须同事务提交<br/>任何失败全部回滚；专项例外不能成为普通提现绕过口

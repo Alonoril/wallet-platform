@@ -28,6 +28,7 @@
 | [06 合约实现与验收记录](20261010-06-solidity-implementation.md) | 已落地模块、签名/控制协议、部署激活、本地验证和生产待办 |
 | [07 流程图与 API 接入](20261011-07-evm-flowcharts-and-api.md) | 彩色泳道、API/合约映射、归集前后风险控制、取消与最终过账 |
 | [08 EVM 合约详细功能图](20261011-08-evm-contract-functions.md) | 仅聚焦合约：固定充值地址、逐项归集、lot 结算、冷热池、签名与限额、案件控制和隔离释放 |
+| [09 EVM 合约原理时序图](20261011-09-evm-contract-principles-sequence.md) | 独立协议设计：各合约功能重点与 14 张 sequenceDiagram，展开部署、授权、资金移动、多案件控制、隔离和治理 |
 
 [打开彩色流程图册](swimlanes/index.html) · [Mermaid 源码与预览](swimlanes/README.md) · [保留的原方块图](flows/README.md)。
 

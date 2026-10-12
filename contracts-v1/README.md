@@ -1,6 +1,6 @@
 # EVM 多租户托管钱包合约 V1
 
-本目录实现[合约钱包设计](../docs/contract-multitenant-wallet-design/README.md)的链上业务：预计算充值地址、受控归集、观察期结算、提现、转冷、案件冻结、资金预留和隔离处置。每个租户、每条链部署一套独立合约；首版一套部署对应一个 `poolId` 风险域。
+本目录实现[合约钱包设计](../docs-v1/contract-multitenant-wallet-design/README.md)的链上业务：预计算充值地址、受控归集、观察期结算、提现、转冷、案件冻结、资金预留和隔离处置。每个租户、每条链部署一套独立合约；首版一套部署对应一个 `poolId` 风险域。
 
 生产默认路径：`DepositVault → ClearingVault → TreasuryVault`；转冷使用本套 `ColdVault`。风险资金留在原址或通过案件授权转入 `QuarantineVault`。
 
@@ -137,7 +137,7 @@ forge script --root . script/PrepareActivation.s.sol:PrepareActivation --rpc-url
 
 ## 6. 验证与生产边界
 
-验证证据及实现与设计的映射见 [06 合约实现与验收记录](../docs/contract-multitenant-wallet-design/20261010-06-solidity-implementation.md)。合约单元与状态验证使用合成密钥、mock ERC-1271 和本地链。
+验证证据及实现与设计的映射见 [06 合约实现与验收记录](../docs-v1/contract-multitenant-wallet-design/20261010-06-solidity-implementation.md)。合约单元与状态验证使用合成密钥、mock ERC-1271 和本地链。
 
 当前交付不包括 Rust 索引器、KYT/KYC 决策、账本、签名服务和租户 API。风险裁定/法律授权由平台形成证据并审批，合约执行控制和移动，不能从链上地址自行识别“黑钱”。资金同质化、交易排序、最终性及发行方冻结的限制仍适用。
 

@@ -1,5 +1,7 @@
 # EVM / wallet-platform-rust / Milon 设计索引
 
+EVM v2 合约已在 [contracts](../../contracts/README.md) 落地，接口、资金状态、风险与部署见 [2026-10-12 实现说明](20261012-evm-contract-implementation.md)。最新未归集提现规则采用**用户签名 + 平台 REFUND_SIGNER 签名**，允许指定外部收款地址；早期文档和图表的单签描述以该实现说明及[提现约定](../提现.md)覆盖。
+
 `wallet-platform-rust` 是双向桥服务。未归集充值由用户本人授权从 EVM 充值合约直接提走，标黑不影响此自提，也无需多签或热钱包。净归集终局后才生成 Milon 专用权益；热钱包提现使用 Milon 预留与多签。热钱包持仓上限按链和币种配置，后端提供授权修改 API。
 
 ## 文档
@@ -7,6 +9,7 @@
 | 文档 | 内容 |
 |---|---|
 | [需求](需求.md) | EVM 充值地址、热钱包池、Milon 多签及三段桥接要求 |
+| [EVM v2 实现与对接](20261012-evm-contract-implementation.md) | 用户与平台双签、合约/API/ABI、风险隔离、共享订单、部署和验证 |
 | [数据映射与桥接协议](20261011-evm-rust-milon-mapping-and-bridge.md) | 用户直接自提、净归集权益、按币种上限 API、统一 ID、uint256 金额、幂等、终局和对账 |
 | [Milon 多签与 EVM 提现](20261011-milon-multisig-evm-withdrawal-design.md) | 现有源码依据、节点多签、跨链证书、验签与安全取消 |
 

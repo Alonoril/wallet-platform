@@ -1,0 +1,547 @@
+{
+  "protocolVersion": "2",
+  "signatureFormat": "EOA/committee: 65 bytes r || s || v, low-s, v=27/28; ERC1271: account-defined authorization bytes",
+  "refund": "user signature AND distinct REFUND_SIGNER signature over the identical RefundPermit digest",
+  "certificateEncoding": "abi.encode(WithdrawalAttestation or CancellationAttestation, bytes[] sortedSignatures)",
+  "sourceAllocationArrayHash": "keccak256(concat(each SourceAllocation structHash))",
+  "domains": {
+    "RefundPermit": "DepositVault",
+    "WalletBinding": "DepositFactory",
+    "UserSignerRotation": "DepositFactory",
+    "SweepPermit": "DepositVault",
+    "WithdrawalPermit": "HotVault",
+    "MovementPermit": "HotVault",
+    "WithdrawalAttestation": "MilonWithdrawalVerifier",
+    "CancellationAttestation": "MilonWithdrawalVerifier",
+    "CancelPermit": "WithdrawalBook"
+  },
+  "types": {
+    "RefundPermit": [
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "userKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "walletKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "assetKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "name": "assetStateNonce",
+        "type": "uint256"
+      },
+      {
+        "name": "userSignerEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "refundSignerEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint48"
+      },
+      {
+        "name": "deadline",
+        "type": "uint48"
+      }
+    ],
+    "WalletBinding": [
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "userKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "logicalWalletId",
+        "type": "bytes32"
+      },
+      {
+        "name": "userSigner",
+        "type": "address"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint48"
+      },
+      {
+        "name": "deadline",
+        "type": "uint48"
+      }
+    ],
+    "UserSignerRotation": [
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "userKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "oldSigner",
+        "type": "address"
+      },
+      {
+        "name": "newSigner",
+        "type": "address"
+      },
+      {
+        "name": "userSignerEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "refundSignerEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint48"
+      },
+      {
+        "name": "deadline",
+        "type": "uint48"
+      }
+    ],
+    "SourceAllocation": [
+      {
+        "name": "depositId",
+        "type": "bytes32"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "name": "observedAt",
+        "type": "uint48"
+      },
+      {
+        "name": "sourceRiskEpoch",
+        "type": "uint64"
+      }
+    ],
+    "SweepPermit": [
+      {
+        "name": "operationId",
+        "type": "bytes32"
+      },
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "walletKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "assetKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "hotVault",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "name": "expectedBalance",
+        "type": "uint256"
+      },
+      {
+        "name": "assetStateNonce",
+        "type": "uint256"
+      },
+      {
+        "name": "allocationsHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "mappingEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "assetEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "capVersion",
+        "type": "uint64"
+      },
+      {
+        "name": "vaultEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "vaultAssetEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "userRiskEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "hotEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "hotAssetEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "policyEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "authorityEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "sweepSignerEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint48"
+      },
+      {
+        "name": "deadline",
+        "type": "uint48"
+      }
+    ],
+    "WithdrawalPermit": [
+      {
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "userKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "assetKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "poolId",
+        "type": "bytes32"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "name": "approvalDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "mappingEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "assetEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "poolEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "poolAssetEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "userRiskEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "recipientRiskEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "policyEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "authorityEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "signerEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint48"
+      },
+      {
+        "name": "deadline",
+        "type": "uint48"
+      }
+    ],
+    "MovementPermit": [
+      {
+        "name": "operationId",
+        "type": "bytes32"
+      },
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "assetKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "name": "destination",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "name": "expectedBalance",
+        "type": "uint256"
+      },
+      {
+        "name": "assetStateNonce",
+        "type": "uint256"
+      },
+      {
+        "name": "requiredCapacity",
+        "type": "uint256"
+      },
+      {
+        "name": "mappingEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "assetEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "capVersion",
+        "type": "uint64"
+      },
+      {
+        "name": "sourceEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "sourceAssetEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "destinationEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "destinationAssetEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "destinationRecipientEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "coldAddressEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "policyEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "authorityEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "transferSignerEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint48"
+      },
+      {
+        "name": "deadline",
+        "type": "uint48"
+      }
+    ],
+    "WithdrawalAttestation": [
+      {
+        "name": "permitDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "sourceChainId",
+        "type": "uint256"
+      },
+      {
+        "name": "sourceGenesisHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "withdrawalAppId",
+        "type": "uint8"
+      },
+      {
+        "name": "committeeId",
+        "type": "bytes32"
+      },
+      {
+        "name": "committeeEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "approvedHeight",
+        "type": "uint64"
+      },
+      {
+        "name": "approvedBlockHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "approvedTxHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "bridgeEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "action",
+        "type": "uint8"
+      }
+    ],
+    "CancellationAttestation": [
+      {
+        "name": "cancelDigest",
+        "type": "bytes32"
+      },
+      {
+        "name": "sourceChainId",
+        "type": "uint256"
+      },
+      {
+        "name": "sourceGenesisHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "withdrawalAppId",
+        "type": "uint8"
+      },
+      {
+        "name": "committeeId",
+        "type": "bytes32"
+      },
+      {
+        "name": "committeeEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "approvedHeight",
+        "type": "uint64"
+      },
+      {
+        "name": "approvedBlockHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "approvedTxHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "bridgeEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "action",
+        "type": "uint8"
+      }
+    ],
+    "CancelPermit": [
+      {
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "name": "tenantKey",
+        "type": "bytes32"
+      },
+      {
+        "name": "cancellationContext",
+        "type": "bytes32"
+      },
+      {
+        "name": "signerEpoch",
+        "type": "uint64"
+      },
+      {
+        "name": "validAfter",
+        "type": "uint48"
+      },
+      {
+        "name": "deadline",
+        "type": "uint48"
+      }
+    ]
+  },
+  "idDomains": {
+    "CHAIN_V1": "0xcbb521c85b82ed13825a7c017d84b7ffaddc6d7e7a3316864f052734397549e5",
+    "WALLET_V1": "0xc5e229a6db79b0c88d850c3672f796d5ee631ec3c8453d16ba1b594123725f75",
+    "ASSET_V1": "0x5e8709cbbbce6ce06c7f0a75eb1a417b831c2dd08b2a0b6bb4552224bea66015",
+    "DEPOSIT_V1": "0x64b5446333e0e0e9289ff1eac1bfc6f1c9d906af5fc95e9512ccba2cf907a93b",
+    "REFUND_V1": "0x040c8f9db8a7a60d77f9355f6991d12f38685c8050333d630d76bce546bedacf",
+    "MOVE_V1": "0xa917c463cac6e784afee0fdef6b2c1335a590eec1f9161c04dcf6fd2f530e82e"
+  },
+  "evmNamespace": "0x84e75c8576483b53128ed23c26158522388ddb0a5df8516c83887d522196f91f",
+  "nativeToken": "0x0000000000000000000000000000000000000000",
+  "locatorKindLog": 1
+}

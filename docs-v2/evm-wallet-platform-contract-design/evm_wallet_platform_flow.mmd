@@ -1,85 +1,131 @@
-flowchart TD
+---
+config:
+  theme: neutral
+  fontFamily: PingFang SC, Microsoft YaHei, sans-serif
+  flowchart:
+    htmlLabels: true
+    nodeSpacing: 24
+    rankSpacing: 32
+    padding: 12
+---
+flowchart LR
+  %% 主流程从左到右，分组内部从上到下；跨组连线使用分组作为锚点。
   subgraph S1["① 创建与分配充值合约"]
+    direction TB
     U["租户用户 / Wallet API"] --> DF["DepositFactory / Registry"]
     DF -->|"CREATE2：tenant + user + chain + version"| DV["DepositVault：独立充值合约"]
   end
 
-  subgraph S2["② 充值审查与观察期"]
-    DV -->|"原生币 / ERC20 入账"| IDX["wallet-platform-rust：来源解析 + depositId + 链终局"]
+  subgraph S2["② 待归集余额与观察期"]
+    direction TB
+    IDX["Rust：解析充值来源、depositId、链终局"] --> PENDING["待归集余额不计入 Milon 可用权益"]
+    PENDING ~~~ RISK
     IDX --> RISK{"来源风控和地址冻结检测通过？"}
     RISK -->|"通过"| WATCH["观察期 T：每笔充值独立计时"]
-    WATCH --> PRE{"观察期到期 / 归集前复核通过？"}
+    WATCH --> PRE{"到期且归集前复核通过？"}
   end
 
   subgraph S3["③ 污染地址隔离与轮换"]
-    RISK -->|"失败"| LOCK["Quarantine：禁提现、禁归集"]
-    PRE -->|"失败"| LOCK
-    LOCK --> RETIRE["Retire 旧地址：停止业务监听与入账"]
-    RETIRE -->|"版本 +1"| DF
-    RETIRE --> OLD["旧地址仍可能被动收到转账；保留审计记录"]
+    direction TB
+    LOCK["受限 ACTIVE：禁归集，保留用户自提"] --> ROTATE["Factory 部署版本 +1 新地址，发布同一用户映射"]
+    ROTATE -->|"处理旧地址剩余余额后"| RETIRE["Retired：禁提现禁归集，停止业务入账"]
+    RETIRE --> OLD["旧地址仍可能被动收款；保留审计记录"]
   end
 
-  subgraph S4["④ 统一多签提现：未归集余额 / 热池权益"]
-    WATCH -->|"用户发起提现"| WRISK{"出金风控通过且有清洁可用余额？"}
-    WRISK -->|"通过"| MREQUEST["Milon App：统一 requestId，原子预留本金和费用"]
-    MREQUEST --> MVOTE["Milon 多签执行 ApproveWithdrawal，等待业务终局"]
-    MVOTE --> CERT["wallet-platform-rust：汇集节点跨链签名，中继原 Permit"]
-    CERT --> SOURCE{"已批准的付款源？"}
-    SOURCE -->|"未归集余额"| WITHDRAW["DepositVault 提现：拟新增验签和共享订单入口"]
-    SOURCE -->|"热钱包余额"| HOUT["HotVault.executeWithdrawal：验签、风控、共享订单消费"]
-    WITHDRAW --> EXT["用户指定外部地址"]
-    HOUT --> EXT
-    EXT --> FINAL["EVM 付款最终确认"]
-    FINAL --> RESULT["wallet-platform-rust：收集可信结果，中继至 Milon"]
-    RESULT --> PAID["Milon ApplyWithdrawalResult：幂等结算预留"]
-    WRISK -->|"失败"| HOLD["拒绝 / 冻结本次提现"]
+  subgraph S4["④ 未归集直接自提<br/>无需多签，不经过热钱包"]
+    direction TB
+    USERAUTH["平台认证、钱包归属、REFUND_SIGNER 单签"] --> REL["Relayer 支付独立 Gas"]
+    REL --> WITHDRAW["DepositVault.withdraw：验单签、资产 nonce、实际余额"]
+    WITHDRAW --> UEXT["用户指定外部地址"]
+    UEXT --> REFUND["Rust：记录 refundId 与净剩余，不发行权益"]
+    REFUND --> STATE["余额与 nonce 已变化，旧归集授权失效"]
   end
 
   subgraph S5["⑤ 热钱包池动态分配"]
-    PRE -->|"通过"| PM["HotPoolManager：最多 20 / 50 个 HotVault"]
-    PM --> CAP{"有健康热钱包且剩余容量足够？"}
+    direction TB
+    PM["HotPoolManager：最多 20 / 50 个 HotVault"] --> LIMIT["按 chainKey + assetKey 读取 maxBalanceRaw / enabled"]
+    LIMIT --> ENABLED{"币种启用且上限大于零？"}
+    ENABLED -->|"是"| CAP{"健康热钱包的目标币种容量足够？"}
+    ENABLED -->|"否"| QUEUE["待归集 / 人工处置，不强制超额"]
     CAP -->|"有"| SWEEP["DepositVault.sweep → HotVault"]
-    CAP -->|"没有"| CNT{"现有热钱包数量小于上限？"}
+    CAP -->|"没有"| CNT{"热钱包数量小于上限？"}
     CNT -->|"是"| NEW["部署新 HotVault"]
-    NEW --> SWEEP
-    CNT -->|"否"| OLDEST["选择最旧且风险正常的 HotVault"]
-    SWEEP --> HOT["HotVault：目标持仓上限 100,000 USD"]
-    HOT -->|"用户申请提取热池权益"| WRISK
+    NEW --> LIMIT
+    CNT -->|"否"| OLDEST["最旧健康池：持有目标币种且能释放所需容量"]
+    SWEEP --> HOT["各币种分别执行持仓数量上限"]
   end
 
-  subgraph S6["⑥ 冷钱包归集与容量回收"]
-    OLDEST --> CCHECK{"资产可转移且出冷风控通过？"}
-    CCHECK -->|"是"| SEND["HotVault.sweepToCold：Relayer 支付 Gas"]
-    SEND --> COLD["离线 Cold EOA：系统仅保存公开地址"]
-    SEND --> RELEASE["旧 HotVault 释放容量"]
-    RELEASE --> SWEEP
-    CCHECK -->|"否"| QUEUE["待归集队列 / 人工处置，不强制超额"]
+  subgraph S6["⑥ 转冷与容量回收"]
+    direction TB
+    CCHECK{"目标币种可转移且出冷风控通过？"}
+    CCHECK -->|"是"| SEND["HotVault.sweepToCold：目标币种转冷，Relayer 支付 Gas"]
+    SEND --> COLD["离线 Cold EOA：仅保存公开地址"]
+    COLD --> RELEASE["旧 HotVault 释放目标币种容量"]
+    CCHECK -->|"否"| CQUEUE["继续待归集，不强制超额"]
   end
 
   subgraph S7["⑦ 归集后风险应急"]
-    HOT --> POST{"归集后发现关联黑钱？"}
-    POST -->|"是"| FREEZE["冻结受影响 HotVault，停止出金与转冷；链上追踪"]
+    direction TB
+    POST{"热钱包发现关联黑钱？"}
+    POST -->|"是"| FREEZE["冻结受影响热钱包，停止出金与转冷"]
     POST -->|"否"| NORMAL["正常运营，持续风险监控"]
-    FREEZE -->|"追溯来源"| LOCK
-    COLD -.->|"事后发现污染"| COLD_RISK["冷钱包离线隔离 + 合规处置，不支持链上撤销"]
+    FREEZE --> TRACE["追溯污染来源，禁相关地址后续归集"]
+    COLD_RISK["冷钱包事后污染：离线隔离与合规处置，无法链上撤销"]
+    TRACE ~~~ COLD_RISK
   end
 
-  subgraph S8["⑧ EVM 与 Milon 权益映射"]
-    RISK -->|"初审通过，来源已终局"| CREDIT["Rust：映射 tenantKey / userKey / assetKey，汇集入账授权"]
-    CREDIT --> MBAL["Milon CreditDeposit：来源去重，记 available / riskHeld"]
-    MBAL -.->|"提供可用权益与用户授权校验依据"| WRISK
-    LOCK --> RUPDATE["Rust：同步 EVM 限制与 Milon 风险预留"]
-    SWEEP -.-> MOVEMENT["Rust：内部资金移动，只更新托管位置，不再次入账"]
-    SEND -.-> MOVEMENT
+  subgraph S8["⑧ wallet-platform-rust<br/>→ Milon 权益与托管同步"]
+    direction TB
+    CREDIT["关联 depositId + movementId，扣除自提后核验净归集"]
+    CREDIT --> MBAL["Milon CreditDeposit：creditId 去重，仅为净归集发行权益"]
+    MOVEMENT["归集后调拨 / 转冷 / 补仓：仅更新托管位置，不再次入账"]
+    RUPDATE["风险事件：同步热钱包限制与已归集权益风险预留"]
+    MBAL ~~~ MOVEMENT ~~~ RUPDATE
   end
+
+  subgraph S9["⑨ 已归集权益提现<br/>Milon → Rust → EVM"]
+    direction TB
+    WRISK{"出金风控通过且有可用权益？"}
+    WRISK -->|"通过"| MREQUEST["Milon：requestId，原子预留本金与费用"]
+    MREQUEST --> MVOTE["多签执行 ApproveWithdrawal，等待业务终局"]
+    MVOTE --> CERT["Rust 汇集节点跨链签名，中继原 Permit"]
+    CERT --> HOUT["HotVault.executeWithdrawal：验门限、风控、共享订单消费"]
+    HOUT --> EXT["已审批的用户外部地址"]
+    EXT --> FINAL["EVM 付款最终确认"]
+    FINAL --> RESULT["Rust 收集可信结果，中继至 Milon"]
+    RESULT --> PAID["Milon ApplyWithdrawalResult：幂等结算预留"]
+    WRISK -->|"失败"| HOLD["拒绝 / 冻结本次热钱包提现"]
+  end
+
+  subgraph S10["⑩ 按币种修改持仓上限"]
+    direction TB
+    ADMIN["管理 PUT API：max_balance_raw、enabled、预期版本"] --> AUTH["租户权限、幂等、审计"]
+    AUTH --> CONFIG["按治理权限提交配置交易"]
+    CONFIG --> EFFECTIVE["链上最终确认，更新 capVersion"]
+  end
+
+  S1 -->|"原生币 / ERC20<br/>充值到账"| S2
+  S2 -->|"申请<br/>未归集自提"| S4
+  S2 -->|"审查 / 复核失败"| S3
+  S3 -->|"ACTIVE 标黑期间<br/>仍可自提"| S4
+  S2 -->|"观察期到期<br/>复核通过且有净剩余"| S5
+  S10 -->|"当前币种配置"| S5
+  S5 -->|"池已满<br/>目标币种容量不足"| S6
+  S6 -->|"释放容量<br/>重新分配"| S5
+  S5 -->|"净归集<br/>最终确认"| S8
+  S6 -.->|"内部移动"| S8
+  S5 -->|"持续风控"| S7
+  S6 -.->|"事后污染"| S7
+  S7 -->|"同步风险限制"| S8
+  S8 -->|"已归集权益<br/>与用户授权"| S9
 
   classDef danger fill:#fee2e2,stroke:#f87171,color:#991b1b;
   classDef money fill:#d1fae5,stroke:#34d399,color:#065f46;
   classDef hot fill:#fef3c7,stroke:#f59e0b,color:#92400e;
   classDef milon fill:#e0e7ff,stroke:#6366f1,color:#312e81;
   classDef bridge fill:#e0f2fe,stroke:#0ea5e9,color:#0c4a6e;
-  class LOCK,RETIRE,OLD,HOLD,FREEZE,COLD_RISK danger;
-  class WITHDRAW,HOUT,EXT,SEND,COLD,RELEASE,FINAL money;
-  class PM,CAP,CNT,OLDEST,NEW,SWEEP,HOT hot;
+  class LOCK,RETIRE,OLD,HOLD,FREEZE,TRACE,COLD_RISK danger;
+  class WITHDRAW,UEXT,HOUT,EXT,SEND,COLD,RELEASE,FINAL money;
+  class PM,LIMIT,ENABLED,CAP,CNT,OLDEST,NEW,SWEEP,HOT hot;
   class MREQUEST,MVOTE,PAID,MBAL milon;
-  class IDX,CERT,RESULT,CREDIT,RUPDATE,MOVEMENT bridge;
+  class IDX,PENDING,USERAUTH,REL,REFUND,STATE,CERT,RESULT,CREDIT,RUPDATE,MOVEMENT,ADMIN,AUTH,CONFIG,EFFECTIVE bridge;

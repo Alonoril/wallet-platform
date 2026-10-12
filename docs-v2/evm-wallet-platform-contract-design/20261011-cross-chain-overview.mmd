@@ -14,19 +14,39 @@ sequenceDiagram
     end
 
     rect rgb(236, 253, 245)
-        Note over E,M: 充值：真实到账转成一次用户权益
+        Note over E,M: 充值与自提：未归集余额独立于 Milon 可用权益
         E-->>R: B3 来源到账（txHash、定位、原始金额）
-        R->>R: 映射归属，来源终局，风控，节点独立核验
-        R->>M: B4 CreditDeposit（depositId、assetKey、amountRaw）
-        M->>M: 来源去重，原子增加 available 或 riskHeld
-        M-->>R: B8 已应用并终局，更新查询投影
-        E-->>R: B6 归集 / 热池调拨 / 转冷 / 补仓
+        R->>R: 保存 depositId 与待归集余额，不提前发行权益
+        opt 用户自提部分或全部未归集资产（含平台标黑用户）
+            R->>R: 平台认证用户与钱包，签发专用单签授权
+            R->>E: DepositVault.withdraw（单签、资产 nonce），代付 Gas
+            E->>E: 验单签与真实余额，原子转账，不调用热钱包
+            E-->>R: UncollectedWithdrawn（refundId、金额、nonce）
+            R->>R: 等回执终局，更新来源净剩余，无需 Milon 审批
+        end
+        opt 观察期与归集风控通过，且仍有净剩余
+            R->>E: sweep（资产 nonce、目标币种当前持仓上限）
+            E-->>R: 净归集成功与两侧到账最终确认
+            R->>R: 独立节点核验原来源、退款与净归集分配
+            R->>M: B4 CreditDeposit（creditId、depositId、movementId）
+            M->>M: 来源累计与分配去重，只发行净归集权益
+            M-->>R: B8 已应用并终局，更新查询投影
+        end
+        E-->>R: B6 后续热池调拨 / 转冷 / 补仓
         R->>M: RecordCustodyMovement（仅更新托管位置）
-        Note over E,M: 内部资金移动不增加用户总权益
+        Note over E,M: 用户自提无需多签；净归集只记权益一次，后续移动不增发
+    end
+
+    rect rgb(239, 246, 255)
+        Note over E,M: 热钱包持仓上限：按币种配置，每个池分别检查
+        R->>R: 管理 PUT API，校验租户权限、幂等与预期版本
+        R->>E: 按治理权限提交 maxBalanceRaw / enabled 配置
+        E-->>R: 配置事件与状态最终确认（capVersion）
+        R->>R: 更新有效配置与目标币种归集容量
     end
 
     rect rgb(255, 251, 235)
-        Note over E,M: 提现：Milon 审批，经后端到 EVM，再回 Milon 结算
+        Note over E,M: 热钱包提现：Milon 审批，经后端到 EVM，再回 Milon 结算
         M->>M: W1 用户授权，原子预留本金与费用
         M-->>R: 发现 requestId、reservationId 和余额预留
         R->>M: W2 固定唯一 attempt、付款源与 Permit
@@ -43,7 +63,8 @@ sequenceDiagram
 
     rect rgb(254, 242, 242)
         Note over E,M: 风险与恢复：两端独立确认，后端追踪收敛
-        R->>E: 风险限制或安全取消（有效授权）
-        R->>M: B5 风险预留或 CancelRequested（有效授权）
+        R->>E: 限制归集 / 热钱包出金，或安全取消（有效授权）
+        R->>M: B5 已归集权益风险预留，或 CancelRequested
+        Note over E,M: 平台标黑不关闭 ACTIVE 充值合约的未归集自提
         Note over E,M: 取消或所有旧授权失效最终确认后，才能释放提现预留
     end

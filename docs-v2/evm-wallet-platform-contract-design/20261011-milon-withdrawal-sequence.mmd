@@ -4,7 +4,7 @@ sequenceDiagram
     participant R as wallet-platform-rust<br/>双向桥接服务
     participant M as Milon App<br/>权益预留与多签订单
 
-    Note over E,M: tenantKey / userKey / assetKey 与 requestId 全程一致
+    Note over E,M: 本图仅处理已归集权益；tenantKey / userKey / assetKey 与 requestId 全程一致
     R->>M: W1 RequestWithdrawal（用户授权、本金、费用与收款人）
     M->>M: 校验身份和 available，原子建立 withdrawalHeld
     M-->>R: Reserved（requestId、reservationId、权益版本）
@@ -31,6 +31,6 @@ sequenceDiagram
     M-->>R: B8 结果成功终局（messageId、requestId、bodyHash）
     R->>R: 更新查询投影、完成桥作业并通知用户
 
-    Note over E,M: 所有付款源共享订单簿；DepositVault 未归集提现为拟新增入口
+    Note over E,M: 所有热钱包共享订单簿；未归集自提走 DepositVault 单签，不进入本流程
     Note over R,M: 用户也可直接在 Milon 发起 W1；后端发现订单后继续同一流程
     Note over E,M: 私钥在独立节点，后端统一中继；未知付款结果不释放预留

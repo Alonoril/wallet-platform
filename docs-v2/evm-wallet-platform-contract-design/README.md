@@ -1,13 +1,13 @@
 # EVM / wallet-platform-rust / Milon 设计索引
 
-`wallet-platform-rust` 是双向桥服务。真实托管资产在 EVM，专用权益、预留和审批在 Milon；统一标识贯穿充值、归集、提现、回执与恢复。
+`wallet-platform-rust` 是双向桥服务。未归集充值由用户本人授权从 EVM 充值合约直接提走，标黑不影响此自提，也无需多签或热钱包。净归集终局后才生成 Milon 专用权益；热钱包提现使用 Milon 预留与多签。热钱包持仓上限按链和币种配置，后端提供授权修改 API。
 
 ## 文档
 
 | 文档 | 内容 |
 |---|---|
 | [需求](需求.md) | EVM 充值地址、热钱包池、Milon 多签及三段桥接要求 |
-| [数据映射与桥接协议](20261011-evm-rust-milon-mapping-and-bridge.md) | 三端权威、统一 ID、uint256 原始金额、消息字段、幂等、终局和对账 |
+| [数据映射与桥接协议](20261011-evm-rust-milon-mapping-and-bridge.md) | 用户直接自提、净归集权益、按币种上限 API、统一 ID、uint256 金额、幂等、终局和对账 |
 | [Milon 多签与 EVM 提现](20261011-milon-multisig-evm-withdrawal-design.md) | 现有源码依据、节点多签、跨链证书、验签与安全取消 |
 
 ## 已打通的设计流程
@@ -17,7 +17,7 @@
 | 流程图 | SVG | Mermaid 源码 |
 |---|---|---|
 | 三段总流程 | [查看](20261011-cross-chain-overview.svg) | [编辑](20261011-cross-chain-overview.mmd) |
-| 充值映射与权益入账 | [查看](20261011-cross-chain-deposit-sequence.svg) | [编辑](20261011-cross-chain-deposit-sequence.mmd) |
+| 充值、自提与净归集权益入账 | [查看](20261011-cross-chain-deposit-sequence.svg) | [编辑](20261011-cross-chain-deposit-sequence.mmd) |
 | 多签提现与付款回执 | [查看](20261011-milon-withdrawal-sequence.svg) | [编辑](20261011-milon-withdrawal-sequence.mmd) |
 | 风险、地址轮换、取消与恢复 | [查看](20261011-cross-chain-recovery-sequence.svg) | [编辑](20261011-cross-chain-recovery-sequence.mmd) |
 | 提现订单状态 | [查看](20261011-milon-withdrawal-state.svg) | [编辑](20261011-milon-withdrawal-state.mmd) |

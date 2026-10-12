@@ -12,24 +12,30 @@ sequenceDiagram
     alt 来源在终局前被重组移除
         E-->>R: 规范链不再包含原观察
         R->>R: 标 Removed 并重扫；不投递权益消息
-    else 来源终局且初审通过
-        R->>R: 协调独立节点核验到账、归属和风险证据
-        R->>M: B4 CreditDeposit（depositId、amountRaw、授权证据）
-        M->>M: 校验配置版本、来源唯一性和门限授权
-        M->>M: 原子增加 available；受限入账增加 riskHeld
-        M-->>R: DepositCredited（depositId、bodyHash、权益版本）
-        R->>R: 等业务交易终局，查询同一 depositId
-        R->>R: B8 更新权益投影、完成 Outbox 并通知
-    else 未通过初审或证据不完整
-        R->>R: 保持 Pending / Unknown；不自动增加 available
+    else 来源最终确认
+        R->>R: 展示待归集余额；不记 Milon available 或 riskHeld
+        opt 用户申请未归集自提（包括平台标黑用户）
+            R->>R: 身份认证与钱包归属，REFUND_SIGNER 签一份授权
+            R->>E: DepositVault.withdraw（单签、nonce、金额、收款人）
+            E->>E: 检查授权与余额，消费资产 nonce 后原子付款
+            E-->>R: UncollectedWithdrawn（refundId、金额、消耗 nonce）
+            R->>R: 等最终回执，重建来源净剩余；无热钱包、多签或权益扣减
+        end
+        alt 仍有净剩余，且观察期与归集风控通过
+            R->>E: sweep（movementId、预期资产 nonce、当前币种容量）
+            E->>E: 校验 nonce、风险和持仓上限，归集实际剩余
+            E-->>R: SweepExecuted 与两侧到账最终确认
+            R->>R: 独立节点核验到账、退款和净归集来源分配
+            R->>M: B4 CreditDeposit（creditId、depositId、movementId、净归集量）
+            M->>M: 来源累计量、归集分配与 creditId 原子去重
+            M->>M: 净归集增加 available；归集后受限权益增加 riskHeld
+            M-->>R: DepositCredited（creditId、bodyHash、权益版本）
+            R->>R: B8 等 Milon 终局，更新投影和通知
+        else 未到观察期、风控不通过、容量不足或已全部自提
+            R->>R: 不归集、不发行权益；剩余未归集资产仍可自提
+        end
     end
 
-    opt 观察期结束且归集复核通过
-        R->>E: 受控 sweep（movementId、真实金额和风险版本）
-        E-->>R: 归集事件及最终托管余额
-        R->>M: B6 RecordCustodyMovement（depositId 关联）
-        M-->>R: 托管位置更新；用户总权益保持不变
-    end
-
-    Note over R,M: 回包丢失先查 depositId 与 bodyHash，再重试原消息
-    Note over E,M: 一笔到账只选一种主定位；归集与冷钱包补仓不得再次当充值
+    Note over E,M: 来源证据不完整不自动发行权益；自提执行不等待桥服务或 Milon 同步
+    Note over E,R: 自提与归集共用资产状态 nonce；先成功的一方使旧授权失效
+    Note over R,M: 回包丢失查 creditId / bodyHash；后续调拨、转冷、补仓只更新托管位置

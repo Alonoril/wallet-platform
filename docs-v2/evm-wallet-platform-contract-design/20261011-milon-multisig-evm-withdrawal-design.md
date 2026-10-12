@@ -4,7 +4,7 @@
 
 本方案补充[原始需求](需求.md)，聚焦已经归集到 EVM 热钱包的资产如何经 Milon 审批后提现。`HotVault` 是新版设计名称；当前 Solidity 实现中对应的出金入口为 `TreasuryVault.executeWithdrawal`。两套名称不代表当前已经实现了新版动态热钱包池。
 
-三段标识、专用权益账本、金额精度和双向消息以 [EVM / Rust / Milon 映射与桥接设计](20261011-evm-rust-milon-mapping-and-bridge.md) 为统一约定；该方案还补齐充值映射与未归集提现的付款源约束。
+三段标识、专用权益账本、金额精度和双向消息以 [EVM / Rust / Milon 映射与桥接设计](20261011-evm-rust-milon-mapping-and-bridge.md) 为统一约定。未归集充值采用用户本人授权的 DepositVault 直接提现，即使用户被标黑也无需 Milon 多签或热钱包；实际归集最终确认后才生成本方案使用的可用权益。
 
 ## 1. 设计结论与安全边界
 
@@ -86,7 +86,7 @@ Milon 的槽提议使用 BLS 聚合，用户块 `BlockCert / QuorumCert` 保存 
 
 用户已选择新增专用托管权益账本资源：记录租户、用户、EVM 资产映射、可用余额、提现预留、风险预留和版本。Milon App 是这些权益与订单的权威，`wallet-platform-rust` 数据库保存终局查询投影，供节点核验的余额来自 Milon 链上资源。
 
-这里的余额是对 EVM 托管资产的提取权益，不默认等同于 MIL 原生币或 Milon 已有 Token。充值、交易结算、内部转账等改变余额的操作都必须纳入该账本；否则只做充值映射仍无法保证提现额度正确。EVM 充值入账需由独立验证节点核验终局和充值事件，再以门限授权记账，按 `chainId + txHash + logIndex` 去重。
+这里的余额是对已归集 EVM 托管资产的提取权益，不默认等同于 MIL 原生币或 Milon 已有 Token。净归集入账、交易结算、内部转账等改变余额的操作都必须纳入该账本。独立节点核验原充值、直接自提扣除额、最终归集与来源分配，再以门限授权记账；按 creditId 去重，并以 depositId 和 movementId 约束累计金额。未归集余额不计入此账本。
 
 资产权益按 EVM 最小单位保存 256 位原始金额，不自动铸造 Milon Token。充值解析、终局核验、门限材料收集和 CreditDeposit 提交都经后端桥服务，目标 App 自行校验来源与授权并去重。PostgreSQL 不独立增加或扣减同一用户权益。
 
@@ -193,7 +193,7 @@ TreasuryVault.executeWithdrawal(Permit, certificateBytes, councilAuthorization)
 
 ERC-1271 验签为只读操作，不能在 `isValidSignature` 内消费提现订单。订单消费放在 HotVault 调用的共享状态合约中，与实际转账处于同一 EVM 事务。[ERC-1271 标准](https://eips.ethereum.org/EIPS/eip-1271)明确了只读验签约束。
 
-桥接消息中的 mappingEpoch、assetEpoch、sourceKind 和完整业务关联通过批准上下文与 approvalDigest 绑定，再纳入原 Permit digest。新旧协议版本不能混用；新增 DepositVault 付款源需有同等验签、共享订单和资金预留保护。
+桥接消息中的 mappingEpoch、assetEpoch、sourceKind 和完整业务关联通过批准上下文与 approvalDigest 绑定，再纳入原 Permit digest。新旧协议版本不能混用；本流程 sourceKind 固定为 HotVault。DepositVault 用户自提使用独立用户授权和充值合约资产状态 nonce，不接入本跨链门限验签路径。
 
 ## 6. EVM 安全执行要求
 
@@ -269,7 +269,7 @@ Paid 后将用户预留结算为已付款，并按审批时确定的规则处理
 | 节点审批服务 | 独立核验用户意愿、账本、风控、目标钱包、Permit；发起/续投 Milon 多签 |
 | 节点跨链签名服务 | 终局与审批核验、固定 EIP-712 编码、独立密钥管理、证书材料归档、拒绝任意 digest 签名 |
 | EVM 合约 | ERC-1271 跨链验证器、桥配置治理、共享 WithdrawalBook、取消授权、现有风险/额度控制接入 |
-| wallet-platform-rust | 双向桥接：链/用户/资产/地址映射、充值来源与权益中继、Inbox/Outbox、投票槽调度、签名收集、Gas/nonce 管理、两端终局、结果回执与对账恢复 |
+| wallet-platform-rust | 双向桥接：链/用户/资产/地址映射、净归集来源与权益中继、直接自提回执、币种持仓上限 API、Inbox/Outbox、投票槽调度、签名收集、Gas/nonce 管理、两端终局、结果回执与对账恢复 |
 
 建议先固定用户授权/余额权威、委员会成员与故障模型，再封存跨链消息 ABI 和状态机；然后实现 Milon App 与 EVM 验签/订单簿，最后接入节点服务和 Rust 后端。现有仓库未包含 wallet-platform-rust 实现，本方案没有假设它已有多签或安全签名能力。
 
@@ -282,4 +282,4 @@ Paid 后将用户预留结算为已付款，并按审批时确定的规则处理
 - 全部共识验证节点审批，还是固定提现子委员会；一期人数、权重、阈值和换届规则。
 - 实际 EVM 目标链及其终局规则、支持的资产语义和提现收费方式。
 
-原需求中的“用户提取未归集余额”属于 DepositVault 的独立出金路线。三段映射设计已将其纳入同一 requestId、Milon 预留、多签审批和 EVM 共享消费簿，并要求与 sweep 共用余额屏障；该 DepositVault 提款入口尚需新增实现。冷钱包私钥不参与用户热钱包提款，只在既定离线流程中处理补仓。
+用户提取未归集余额属于 DepositVault 的直接自提路线，风控标黑不阻止自提；无需 Milon 预留、多签审批、跨链证书或热钱包共享订单簿。该路线与 sweep 共用充值合约的余额和资产状态 nonce，实际归集终局后才为净归集金额生成权益。用户授权绑定和直接提现入口尚需新增实现。热钱包按币种配置持仓上限，并由授权管理 API 修改；具体生效与并发规则见映射设计第 4.3 节。冷钱包私钥不参与用户热钱包提款，只在既定离线流程中处理补仓。
